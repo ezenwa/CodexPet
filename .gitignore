@@ -1,0 +1,18 @@
+# Runtime state
+*.pid
+watcher.log
+close-with-codex.request
+window-position.json
+
+# Generated release artifacts
+dist/
+installer/CodexPet-Payload.zip
+CodexPet-Payload.zip
+*.cab
+*.DDF
+
+# Editor and OS files
+.vs/
+.vscode/
+Thumbs.db
+Desktop.ini
