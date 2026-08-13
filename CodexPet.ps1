@@ -4,7 +4,7 @@
     [int]$CodexProcessId = 0
 )
 Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase
-$script:appVersion = [Version]'1.2.0'
+$script:appVersion = [Version]'1.2.1'
 $script:releaseApiUrl = 'https://api.github.com/repos/ezenwa/CodexPet/releases/latest'
 Add-Type @'
 using System;
@@ -309,8 +309,6 @@ $petAnimations = @{
     Working = New-CodexStateAnimation 7 6 120 220
     Ready   = New-CodexCompletionAnimation 8 6 150 280
 }
-$readyCelebrationMs=0L
-for ($i=0; $i -lt $petAnimations.Ready.LoopStart; $i++) { $readyCelebrationMs += $petAnimations.Ready.Durations[$i] }
 $animationClock = [Diagnostics.Stopwatch]::StartNew()
 function Get-CodexAnimationFrame($animation, [long]$elapsedMs) {
     $total=0L; foreach ($duration in $animation.Durations) { $total += $duration }
@@ -328,14 +326,11 @@ function Get-CodexAnimationFrame($animation, [long]$elapsedMs) {
     return $animation.Frames[-1]
 }
 $script:currentState = ''
-$script:readyAcknowledged = $false
 $script:sessionStateCache = New-CodexPetSessionState
 $script:lastSessionDiscovery = [DateTime]::MinValue
 $script:latestSessionFile = $null
 function Set-State([string]$state, [switch]$Force) {
-    if ($state -eq 'Ready' -and $script:readyAcknowledged -and -not $Force) { return }
     if ($script:currentState -eq $state -and -not $Force) { return }
-    if ($state -in @('Working','Input','Failed','Offline')) { $script:readyAcknowledged=$false }
     $styles = @{ Working=@('#7AA2F7',(Get-CodexPetText 'StatusWorking')); Input=@('#E0AF68',(Get-CodexPetText 'StatusInput')); Ready=@('#9ECE6A',(Get-CodexPetText 'StatusReady')); Failed=@('#F7768E',(Get-CodexPetText 'StatusFailed')); Idle=@('#BB9AF7',(Get-CodexPetText 'StatusIdle')); Offline=@('#565F89',(Get-CodexPetText 'StatusOffline')) }
     $s=$styles[$state]; $brush=[Windows.Media.BrushConverter]::new().ConvertFromString($s[0])
     $pulse.Fill=$brush; $card.BorderBrush=$brush
@@ -479,10 +474,6 @@ $timer.Add_Tick({
             $pet.Source=$petFrames[$frameIndex]
             $script:lastRenderedFrame=$frameIndex
         }
-    }
-    if ($script:currentState -eq 'Ready' -and $animationClock.ElapsedMilliseconds -ge $readyCelebrationMs) {
-        $script:readyAcknowledged=$true
-        Set-State 'Idle'
     }
     $pulse.Opacity=0.45+([Math]::Sin($script:phase*1.4)+1)*0.275
     $script:tick++

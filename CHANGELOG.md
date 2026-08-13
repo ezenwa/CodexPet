@@ -1,5 +1,10 @@
 # Historial de cambios
 
+## 1.2.1 - 2026-08-12
+
+- El estado **Tarea terminada** permanece visible hasta que comienza otra tarea o transcurren diez minutos de inactividad.
+- Prueba automática para impedir que el estado terminado vuelva prematuramente a espera.
+
 ## 1.2.0 - 2026-08-12
 
 - Corrección del texto corrupto en **Buscar actualizaciones** bajo Windows PowerShell 5.1.

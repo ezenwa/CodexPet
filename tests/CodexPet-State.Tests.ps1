@@ -16,6 +16,7 @@ Assert-State Working (Update-CodexPetSessionState $session @((Event task_started
 Assert-State Input (Update-CodexPetSessionState $session @((Event function_call request_user_input))) 'solicitud de usuario'
 Assert-State Working (Update-CodexPetSessionState $session @((Event function_call_output))) 'respuesta del usuario'
 Assert-State Ready (Update-CodexPetSessionState $session @((Event task_complete))) 'finalización'
+Assert-State Ready (Update-CodexPetSessionState $session @()) 'finalización persistente'
 Assert-State Working (Update-CodexPetSessionState $session @((Event task_started))) 'segundo inicio'
 Assert-State Failed (Update-CodexPetSessionState $session @((Event turn_aborted))) 'aborto'
 
