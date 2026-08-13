@@ -1,10 +1,10 @@
-param(
+﻿param(
     [switch]$Startup,
     [switch]$CloseWithCodex,
     [int]$CodexProcessId = 0
 )
 Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase
-$script:appVersion = [Version]'1.1.0'
+$script:appVersion = [Version]'1.2.0'
 $script:releaseApiUrl = 'https://api.github.com/repos/ezenwa/CodexPet/releases/latest'
 Add-Type @'
 using System;
@@ -37,6 +37,28 @@ $stateDir = Join-Path ([Environment]::GetFolderPath('ApplicationData')) 'CodexPe
 New-Item -ItemType Directory -Path $stateDir -Force | Out-Null
 $positionFile = Join-Path $stateDir 'window-position.json'
 $selectedPetFile = Join-Path $stateDir 'selected-pet.txt'
+$languageFile = Join-Path $stateDir 'language.txt'
+. (Join-Path $root 'CodexPet-State.ps1')
+$script:language = $(if ([Globalization.CultureInfo]::CurrentUICulture.TwoLetterISOLanguageName -eq 'es') { 'es' } else { 'en' })
+if (Test-Path -LiteralPath $languageFile) {
+    $savedLanguage = (Get-Content -LiteralPath $languageFile -Raw -ErrorAction SilentlyContinue).Trim().ToLowerInvariant()
+    if ($savedLanguage -in @('en', 'es')) { $script:language = $savedLanguage }
+}
+$script:translations = @{
+    es = @{
+        StatusWorking='CODEX TRABAJANDO'; StatusInput='NECESITA ATENCIÓN'; StatusReady='TAREA TERMINADA'; StatusFailed='CODEX BLOQUEADO'; StatusIdle='CODEX EN ESPERA'; StatusOffline='CODEX DESCONECTADO'
+        ChoosePet='Elegir mascota'; StartWindows='Iniciar con Windows'; CheckUpdates='Buscar actualizaciones...'; ClosePet='Cerrar mascota'; Language='Idioma'; English='Inglés'; Spanish='Español'
+        InvalidVersion='GitHub devolvió una versión no válida: {0}'; NewVersionMessage="Hay una nueva versión de CodexPet: v{0}.`n`nVersión instalada: v{1}.`n`n¿Quieres abrir la página oficial de descarga?"; UpdateAvailable='Actualización disponible'
+        UpToDateMessage='CodexPet está actualizado (v{0}).'; UpdateTitle='Buscar actualizaciones'; UpdateError="No fue posible buscar actualizaciones.`n`n{0}"
+    }
+    en = @{
+        StatusWorking='CODEX WORKING'; StatusInput='NEEDS ATTENTION'; StatusReady='TASK COMPLETE'; StatusFailed='CODEX BLOCKED'; StatusIdle='CODEX IDLE'; StatusOffline='CODEX OFFLINE'
+        ChoosePet='Choose pet'; StartWindows='Start with Windows'; CheckUpdates='Check for updates...'; ClosePet='Close pet'; Language='Language'; English='English'; Spanish='Spanish'
+        InvalidVersion='GitHub returned an invalid version: {0}'; NewVersionMessage="A new CodexPet version is available: v{0}.`n`nInstalled version: v{1}.`n`nDo you want to open the official download page?"; UpdateAvailable='Update available'
+        UpToDateMessage='CodexPet is up to date (v{0}).'; UpdateTitle='Check for updates'; UpdateError="Unable to check for updates.`n`n{0}"
+    }
+}
+function Get-CodexPetText([string]$key) { return [string]$script:translations[$script:language][$key] }
 $legacyPositionFile = Join-Path $root 'window-position.json'
 if (-not (Test-Path -LiteralPath $positionFile) -and (Test-Path -LiteralPath $legacyPositionFile)) {
     Copy-Item -LiteralPath $legacyPositionFile -Destination $positionFile -Force -ErrorAction SilentlyContinue
@@ -305,20 +327,16 @@ function Get-CodexAnimationFrame($animation, [long]$elapsedMs) {
     }
     return $animation.Frames[-1]
 }
-$script:currentState = 'Idle'
+$script:currentState = ''
 $script:readyAcknowledged = $false
-$script:sessionStateCache = [pscustomobject]@{
-    Path              = ''
-    Length            = -1L
-    LastWriteUtcTicks = -1L
-    LastDiscovery     = [DateTime]::MinValue
-    State             = 'Idle'
-}
-function Set-State([string]$state) {
-    if ($state -eq 'Ready' -and $script:readyAcknowledged) { return }
-    if ($script:currentState -eq $state) { return }
+$script:sessionStateCache = New-CodexPetSessionState
+$script:lastSessionDiscovery = [DateTime]::MinValue
+$script:latestSessionFile = $null
+function Set-State([string]$state, [switch]$Force) {
+    if ($state -eq 'Ready' -and $script:readyAcknowledged -and -not $Force) { return }
+    if ($script:currentState -eq $state -and -not $Force) { return }
     if ($state -in @('Working','Input','Failed','Offline')) { $script:readyAcknowledged=$false }
-    $styles = @{ Working=@('#7AA2F7','CODEX TRABAJANDO'); Input=@('#E0AF68','NECESITA ATENCIÓN'); Ready=@('#9ECE6A','TAREA TERMINADA'); Failed=@('#F7768E','CODEX BLOQUEADO'); Idle=@('#BB9AF7','CODEX EN ESPERA'); Offline=@('#565F89','CODEX DESCONECTADO') }
+    $styles = @{ Working=@('#7AA2F7',(Get-CodexPetText 'StatusWorking')); Input=@('#E0AF68',(Get-CodexPetText 'StatusInput')); Ready=@('#9ECE6A',(Get-CodexPetText 'StatusReady')); Failed=@('#F7768E',(Get-CodexPetText 'StatusFailed')); Idle=@('#BB9AF7',(Get-CodexPetText 'StatusIdle')); Offline=@('#565F89',(Get-CodexPetText 'StatusOffline')) }
     $s=$styles[$state]; $brush=[Windows.Media.BrushConverter]::new().ConvertFromString($s[0])
     $pulse.Fill=$brush; $card.BorderBrush=$brush
     $card.Effect.Color=([Windows.Media.ColorConverter]::ConvertFromString($s[0])); $statusText.Text=$s[1]
@@ -330,78 +348,18 @@ function Set-State([string]$state) {
 function Get-CodexState {
     if (@(Get-Process -Name codex -ErrorAction SilentlyContinue).Count -eq 0) { return 'Offline' }
     $now=Get-Date
-    $latest=$null
-    if ($script:sessionStateCache.Path -and
-        ($now-$script:sessionStateCache.LastDiscovery).TotalSeconds -lt 5) {
-        $latest=Get-Item -LiteralPath $script:sessionStateCache.Path -ErrorAction SilentlyContinue
-    }
-    if (-not $latest) {
-        $latest=Get-ChildItem -LiteralPath "$env:USERPROFILE\.codex\sessions" -Recurse -File -ErrorAction SilentlyContinue |
+    if (-not $script:latestSessionFile -or ($now-$script:lastSessionDiscovery).TotalSeconds -ge 5) {
+        $script:latestSessionFile=Get-ChildItem -LiteralPath "$env:USERPROFILE\.codex\sessions" -Recurse -File -ErrorAction SilentlyContinue |
             Sort-Object LastWriteTime -Descending |
             Select-Object -First 1
-        $script:sessionStateCache.LastDiscovery=$now
+        $script:lastSessionDiscovery=$now
     }
+    $latest=$script:latestSessionFile
     if (-not $latest) { return 'Idle' }
-    $lastWriteUtcTicks=$latest.LastWriteTimeUtc.Ticks
-    if ($latest.FullName -eq $script:sessionStateCache.Path -and
-        $latest.Length -eq $script:sessionStateCache.Length -and
-        $lastWriteUtcTicks -eq $script:sessionStateCache.LastWriteUtcTicks) {
-        if ($script:sessionStateCache.State -eq 'Ready' -and
-            ($now-$latest.LastWriteTime).TotalMinutes -ge 10) {
-            $script:sessionStateCache.State='Idle'
-        }
-        return $script:sessionStateCache.State
-    }
-    # Get-Content -Tail becomes very slow on active JSONL files containing long
-    # tool-output records. This code runs on WPF's dispatcher, so read a bounded
-    # byte range directly to keep animation ticks responsive.
-    $stream=$null; $reader=$null
-    try {
-        $stream=[IO.FileStream]::new(
-            $latest.FullName,
-            [IO.FileMode]::Open,
-            [IO.FileAccess]::Read,
-            ([IO.FileShare]::ReadWrite -bor [IO.FileShare]::Delete)
-        )
-        $tailStart=[Math]::Max(0L,$stream.Length-(1MB))
-        [void]$stream.Seek($tailStart,[IO.SeekOrigin]::Begin)
-        $reader=[IO.StreamReader]::new($stream,[Text.Encoding]::UTF8,$true,4096,$false)
-        if ($tailStart -gt 0) { [void]$reader.ReadLine() }
-        $lines=$reader.ReadToEnd() -split "`r?`n"
-    } catch {
-        return 'Idle'
-    } finally {
-        if ($reader) { $reader.Dispose() }
-        elseif ($stream) { $stream.Dispose() }
-    }
-    $eventSequence=0; $started=-1; $complete=-1; $attention=-1; $failed=-1
-    foreach ($line in $lines) {
-        if ($line -notmatch '"type"\s*:\s*"(event_msg|response_item)"') { continue }
-        $payloadType=[regex]::Match(
-            $line,
-            '"payload"\s*:\s*\{\s*"type"\s*:\s*"(?<type>[^"]+)"',
-            [Text.RegularExpressions.RegexOptions]::CultureInvariant
-        )
-        if (-not $payloadType.Success) { continue }
-        $eventSequence++
-        $eventType=$payloadType.Groups['type'].Value
-        switch -Regex ($eventType) {
-            '^task_started$' { $started=$eventSequence; continue }
-            '^task_complete$' { $complete=$eventSequence; continue }
-            'approval|request_user_input|elicitation' { $attention=$eventSequence; continue }
-            'turn_aborted|error|failed' { $failed=$eventSequence; continue }
-        }
-    }
-    $turnBoundary=[Math]::Max($started,$complete)
-    $state = if ($failed -gt $turnBoundary -and $failed -gt $attention) { 'Failed' }
-        elseif ($attention -gt $turnBoundary) { 'Input' }
-        elseif ($started -gt $complete) { 'Working' }
-        elseif ($complete -ge 0 -and ($now-$latest.LastWriteTime).TotalMinutes -lt 10) { 'Ready' }
-        else { 'Idle' }
-    $script:sessionStateCache.Path=$latest.FullName
-    $script:sessionStateCache.Length=$latest.Length
-    $script:sessionStateCache.LastWriteUtcTicks=$lastWriteUtcTicks
-    $script:sessionStateCache.State=$state
+    $latest=Get-Item -LiteralPath $latest.FullName -ErrorAction SilentlyContinue
+    if (-not $latest) { return 'Idle' }
+    $state=Read-CodexPetSessionChanges $script:sessionStateCache $latest
+    if ($state -eq 'Ready' -and ($now-$latest.LastWriteTime).TotalMinutes -ge 10) { return 'Idle' }
     return $state
 }
 function Find-CodexPetUpdate {
@@ -415,13 +373,13 @@ function Find-CodexPetUpdate {
         $versionText = $tag -replace '^[vV]', ''
         $latestVersion = $null
         if (-not [Version]::TryParse($versionText, [ref]$latestVersion)) {
-            throw "GitHub devolvió una versión no válida: $tag"
+            throw ((Get-CodexPetText 'InvalidVersion') -f $tag)
         }
 
         if ($latestVersion -gt $script:appVersion) {
             $answer = [Windows.MessageBox]::Show(
-                "Hay una nueva versión de CodexPet: v$latestVersion.`n`nVersión instalada: v$($script:appVersion)`n`n¿Quieres abrir la página oficial de descarga?",
-                'Actualización disponible',
+                ((Get-CodexPetText 'NewVersionMessage') -f $latestVersion, $script:appVersion),
+                (Get-CodexPetText 'UpdateAvailable'),
                 [Windows.MessageBoxButton]::YesNo,
                 [Windows.MessageBoxImage]::Information
             )
@@ -430,15 +388,15 @@ function Find-CodexPetUpdate {
             }
         } else {
             [Windows.MessageBox]::Show(
-                "CodexPet está actualizado (v$($script:appVersion)).",
-                'Buscar actualizaciones',
+                ((Get-CodexPetText 'UpToDateMessage') -f $script:appVersion),
+                (Get-CodexPetText 'UpdateTitle'),
                 [Windows.MessageBoxButton]::OK,
                 [Windows.MessageBoxImage]::Information
             ) | Out-Null
         }
     } catch {
         [Windows.MessageBox]::Show(
-            "No fue posible buscar actualizaciones.`n`n$($_.Exception.Message)",
+            ((Get-CodexPetText 'UpdateError') -f $_.Exception.Message),
             'CodexPet',
             [Windows.MessageBoxButton]::OK,
             [Windows.MessageBoxImage]::Warning
@@ -446,7 +404,7 @@ function Find-CodexPetUpdate {
     }
 }
 $context=New-Object Windows.Controls.ContextMenu
-$petSelectorItem=New-Object Windows.Controls.MenuItem; $petSelectorItem.Header='Elegir mascota'
+$petSelectorItem=New-Object Windows.Controls.MenuItem
 foreach ($petKey in $petCatalog.Keys) {
     $petItem=New-Object Windows.Controls.MenuItem
     $petItem.Header=$petCatalog[$petKey]; $petItem.Tag=$petKey; $petItem.IsCheckable=$true
@@ -455,7 +413,7 @@ foreach ($petKey in $petCatalog.Keys) {
     $script:petMenuItems[$petKey]=$petItem
     [void]$petSelectorItem.Items.Add($petItem)
 }
-$startupItem=New-Object Windows.Controls.MenuItem; $startupItem.Header='Iniciar con Windows'; $startupItem.IsCheckable=$true; $startupItem.IsChecked=((Test-Path -LiteralPath $shortcutPath) -or ($null -ne (Get-ItemProperty -Path $runKeyPath -Name $runValueName -ErrorAction SilentlyContinue)))
+$startupItem=New-Object Windows.Controls.MenuItem; $startupItem.IsCheckable=$true; $startupItem.IsChecked=((Test-Path -LiteralPath $shortcutPath) -or ($null -ne (Get-ItemProperty -Path $runKeyPath -Name $runValueName -ErrorAction SilentlyContinue)))
 $startupItem.Add_Click({
     if ($startupItem.IsChecked) {
         if (Test-Path -LiteralPath $shortcutPath) { Remove-Item -LiteralPath $shortcutPath -Force }
@@ -466,9 +424,31 @@ $startupItem.Add_Click({
         Remove-ItemProperty -Path $runKeyPath -Name $runValueName -ErrorAction SilentlyContinue
     }
 })
-$updateItem=New-Object Windows.Controls.MenuItem; $updateItem.Header="Buscar actualizaciones… (v$($script:appVersion))"; $updateItem.Add_Click({ Find-CodexPetUpdate })
-$exitItem=New-Object Windows.Controls.MenuItem; $exitItem.Header='Cerrar mascota'; $exitItem.Add_Click({$window.Close()})
-[void]$context.Items.Add($petSelectorItem); [void]$context.Items.Add((New-Object Windows.Controls.Separator)); [void]$context.Items.Add($startupItem); [void]$context.Items.Add($updateItem); [void]$context.Items.Add((New-Object Windows.Controls.Separator)); [void]$context.Items.Add($exitItem); $card.ContextMenu=$context
+$updateItem=New-Object Windows.Controls.MenuItem; $updateItem.Add_Click({ Find-CodexPetUpdate })
+$languageItem=New-Object Windows.Controls.MenuItem
+$englishLanguageItem=New-Object Windows.Controls.MenuItem; $englishLanguageItem.IsCheckable=$true
+$spanishLanguageItem=New-Object Windows.Controls.MenuItem; $spanishLanguageItem.IsCheckable=$true
+[void]$languageItem.Items.Add($englishLanguageItem); [void]$languageItem.Items.Add($spanishLanguageItem)
+$exitItem=New-Object Windows.Controls.MenuItem; $exitItem.Add_Click({$window.Close()})
+function Set-CodexPetLanguage([string]$language) {
+    if ($language -notin @('en', 'es')) { return }
+    $script:language=$language
+    $language | Set-Content -LiteralPath $languageFile -Encoding ascii
+    $petSelectorItem.Header=Get-CodexPetText 'ChoosePet'
+    $startupItem.Header=Get-CodexPetText 'StartWindows'
+    $updateItem.Header="$(Get-CodexPetText 'CheckUpdates') (v$($script:appVersion))"
+    $languageItem.Header=Get-CodexPetText 'Language'
+    $englishLanguageItem.Header=Get-CodexPetText 'English'
+    $spanishLanguageItem.Header=Get-CodexPetText 'Spanish'
+    $exitItem.Header=Get-CodexPetText 'ClosePet'
+    $englishLanguageItem.IsChecked=($language -eq 'en')
+    $spanishLanguageItem.IsChecked=($language -eq 'es')
+    if ($script:currentState) { Set-State $script:currentState -Force }
+}
+$englishLanguageItem.Add_Click({ Set-CodexPetLanguage 'en' })
+$spanishLanguageItem.Add_Click({ Set-CodexPetLanguage 'es' })
+Set-CodexPetLanguage $script:language
+[void]$context.Items.Add($petSelectorItem); [void]$context.Items.Add((New-Object Windows.Controls.Separator)); [void]$context.Items.Add($startupItem); [void]$context.Items.Add($updateItem); [void]$context.Items.Add($languageItem); [void]$context.Items.Add((New-Object Windows.Controls.Separator)); [void]$context.Items.Add($exitItem); $card.ContextMenu=$context
 $window.Add_MouseLeftButtonDown({
     # The animation/state timer shares WPF's UI thread with DragMove. Suspending
     # it prevents session scans and frame updates from interrupting native drag.

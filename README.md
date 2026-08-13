@@ -1,5 +1,7 @@
 # CodexPet
 
+[English documentation](README.en.md)
+
 Una mascota animada para Codex en Windows. CodexPet detecta la actividad de Codex, refleja su estado en tiempo real y permanece sobre el escritorio sin interrumpir tu trabajo.
 
 > [!IMPORTANT]
@@ -9,12 +11,13 @@ Una mascota animada para Codex en Windows. CodexPet detecta la actividad de Code
 
 ## Características
 
-- Estados visuales para espera, trabajo, atención requerida, tarea terminada, bloqueo y desconexión.
+- Estados visuales ligados a eventos reales de Codex: espera, trabajo, atención requerida, tarea terminada, bloqueo/error y desconexión.
 - Ocho mascotas seleccionables: Codex, BSOD, Dewey, Fireball, Null Signal, Rocky, Seedy y Stacky.
 - Una sola ventana estable aunque Codex cree procesos auxiliares temporales.
 - Posición y tamaño persistentes entre sesiones y actualizaciones.
 - Inicio automático con Windows para el usuario actual.
 - Búsqueda manual de nuevas versiones desde GitHub Releases.
+- Interfaz disponible en inglés y español, seleccionable desde el menú.
 - Instalación por usuario; no requiere privilegios de administrador.
 
 ## Requisitos
@@ -79,18 +82,19 @@ $errors = $null
 $errors
 ```
 
-Para generar `dist\CodexPet-Setup.exe` y `dist\CodexPet-Setup.zip`:
+Para generar `dist\CodexPet-Setup.exe` y `dist\CodexPet-Setup.zip` necesitas [Inno Setup 6](https://jrsoftware.org/isinfo.php):
 
-```bat
-Build-Release.cmd 1.1.0
+```powershell
+.\Build-Release.ps1 -Version 1.2.0
 ```
 
 ## Arquitectura
 
-- `CodexPet.ps1`: ventana WPF, animaciones, estado de sesión y actualizaciones.
+- `CodexPet.ps1`: ventana WPF, animaciones, idiomas y actualizaciones.
+- `CodexPet-State.ps1`: lector incremental y mapeo de eventos reales de Codex a estados visuales.
 - `CodexPet-Watcher.ps1`: detecta el grupo de procesos de Codex y mantiene una sola mascota.
-- `Install-CodexPet.ps1`: instalación por usuario y accesos directos.
-- `Uninstall-CodexPet.ps1`: eliminación de la aplicación y sus registros de inicio.
+- `installer/CodexPet.iss`: instalación y desinstalación nativas mediante Inno Setup.
+- `Stop-CodexPet.ps1`: cierre controlado antes de actualizar o desinstalar.
 - `assets/pets`: cuadros de animación de las mascotas.
 
 ## Solución de problemas

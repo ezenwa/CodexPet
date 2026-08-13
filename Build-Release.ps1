@@ -1,76 +1,39 @@
-param([string]$Version = '1.1.0')
+﻿param([string]$Version = (Get-Content -LiteralPath (Join-Path $PSScriptRoot 'VERSION') -Raw).Trim())
 
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
-$installerDir = Join-Path $root 'installer'
+$issPath = Join-Path $root 'installer\CodexPet.iss'
 $distDir = Join-Path $root 'dist'
-$buildDir = Join-Path $root '.build'
-$payloadPath = Join-Path $installerDir 'CodexPet-Payload.zip'
 $setupPath = Join-Path $distDir 'CodexPet-Setup.exe'
 $setupZipPath = Join-Path $distDir 'CodexPet-Setup.zip'
-
-New-Item -ItemType Directory -Path $installerDir, $distDir, $buildDir -Force | Out-Null
-Copy-Item -LiteralPath (Join-Path $root 'Install-CodexPet.ps1') -Destination (Join-Path $installerDir 'Install-CodexPet.ps1') -Force
-Copy-Item -LiteralPath (Join-Path $root 'Install.cmd') -Destination (Join-Path $installerDir 'Install.cmd') -Force
-
-$payloadItems = @(
-    (Join-Path $root 'assets'),
-    (Join-Path $root 'docs'),
-    (Join-Path $root 'CodexPet.ps1'),
-    (Join-Path $root 'CodexPet-Watcher.ps1'),
-    (Join-Path $root 'Start-CodexPetWatcher.vbs'),
-    (Join-Path $root 'Start-CodexPet.cmd'),
-    (Join-Path $root 'Uninstall-CodexPet.ps1'),
-    (Join-Path $root 'README.md'),
-    (Join-Path $root 'CHANGELOG.md')
+$isccCandidates = @(
+    (Join-Path $env:LOCALAPPDATA 'Programs\Inno Setup 6\ISCC.exe'),
+    (Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6\ISCC.exe'),
+    (Join-Path $env:ProgramFiles 'Inno Setup 6\ISCC.exe')
 )
-Compress-Archive -LiteralPath $payloadItems -DestinationPath $payloadPath -CompressionLevel Optimal -Force
+$iscc = $isccCandidates | Where-Object { $_ -and (Test-Path -LiteralPath $_) } | Select-Object -First 1
+if (-not $iscc) { throw 'No se encontró ISCC.exe. Instala Inno Setup 6 antes de compilar.' }
 
-$sedPath = Join-Path $buildDir 'CodexPet-Setup.sed'
-$sed = @"
-[Version]
-Class=IEXPRESS
-SEDVersion=3
-
-[Options]
-PackagePurpose=InstallApp
-ShowInstallProgramWindow=0
-HideExtractAnimation=1
-UseLongFileName=1
-InsideCompressed=0
-CAB_FixedSize=0
-CAB_ResvCodeSigning=0
-RebootMode=N
-InstallPrompt=
-DisplayLicense=
-FinishMessage=
-TargetName=$setupPath
-FriendlyName=CodexPet $Version Setup
-AppLaunched=Install.cmd
-PostInstallCmd=<None>
-AdminQuietInstCmd=Install.cmd
-UserQuietInstCmd=Install.cmd
-SourceFiles=SourceFiles
-
-[Strings]
-FILE0="Install.cmd"
-FILE1="Install-CodexPet.ps1"
-FILE2="CodexPet-Payload.zip"
-
-[SourceFiles]
-SourceFiles0=$installerDir\
-
-[SourceFiles0]
-%FILE0%=
-%FILE1%=
-%FILE2%=
-"@
-$sed | Set-Content -LiteralPath $sedPath -Encoding ascii
-
-[pscustomobject]@{
-    Version = $Version
-    Sed     = $sedPath
-    Payload = $payloadPath
-    Setup   = $setupPath
-    Zip     = $setupZipPath
+foreach ($scriptPath in @(Get-ChildItem -LiteralPath $root -Filter '*.ps1' -File)) {
+    $tokens = $null
+    $errors = $null
+    [Management.Automation.Language.Parser]::ParseFile($scriptPath.FullName, [ref]$tokens, [ref]$errors) | Out-Null
+    if ($errors.Count) { throw "$($scriptPath.Name) contiene errores de sintaxis." }
 }
+
+$stateTests = Join-Path $root 'tests\CodexPet-State.Tests.ps1'
+& powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $stateTests
+if ($LASTEXITCODE -ne 0) { throw 'Fallaron las pruebas de estados de CodexPet.' }
+
+New-Item -ItemType Directory -Path $distDir -Force | Out-Null
+foreach ($oldArtifact in @($setupPath, $setupZipPath)) {
+    if (Test-Path -LiteralPath $oldArtifact) { Remove-Item -LiteralPath $oldArtifact -Force }
+}
+
+& $iscc "/DMyAppVersion=$Version" $issPath
+if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $setupPath)) {
+    throw "Inno Setup no pudo generar $setupPath (código $LASTEXITCODE)."
+}
+
+Compress-Archive -LiteralPath $setupPath -DestinationPath $setupZipPath -CompressionLevel Optimal -Force
+Get-Item -LiteralPath $setupPath, $setupZipPath | Select-Object FullName, Length, LastWriteTime

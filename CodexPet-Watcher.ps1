@@ -1,4 +1,4 @@
-param([string]$InstallDir = $PSScriptRoot)
+﻿param([string]$InstallDir = $PSScriptRoot)
 
 $ErrorActionPreference = 'Stop'
 $logFile = Join-Path $InstallDir 'watcher.log'
