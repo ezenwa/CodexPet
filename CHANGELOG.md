@@ -1,35 +1,37 @@
-# Historial de cambios
+# Changelog
+
+[Historial en español](CHANGELOG.es.md)
 
 ## 1.2.2 - 2026-08-12
 
-- Detección en tiempo real de autorizaciones pendientes mediante la telemetría SQLite local de Codex.
-- Las autorizaciones ya recordadas no activan falsamente el estado **Necesita atención**.
-- El tiempo de **Tarea terminada** se calcula desde el evento real, incluso cuando Codex conserva una fecha antigua en el archivo de sesión activo.
+- Real-time detection of pending approvals through local Codex SQLite telemetry.
+- Previously remembered approvals no longer trigger a false **Needs attention** state.
+- **Task complete** timing is calculated from the actual event, even when Codex preserves an old modification time on the active session file.
 
 ## 1.2.1 - 2026-08-12
 
-- El estado **Tarea terminada** permanece visible hasta que comienza otra tarea o transcurren diez minutos de inactividad.
-- Prueba automática para impedir que el estado terminado vuelva prematuramente a espera.
+- **Task complete** remains visible until another task begins or ten minutes of inactivity pass.
+- Added an automated regression test to prevent the completed state from returning to idle prematurely.
 
 ## 1.2.0 - 2026-08-12
 
-- Corrección del texto corrupto en **Buscar actualizaciones** bajo Windows PowerShell 5.1.
-- Scripts PowerShell normalizados a UTF-8 con BOM para conservar correctamente la ortografía en español.
-- Interfaz de CodexPet disponible en inglés y español con cambio de idioma desde el menú.
-- Instalador bilingüe migrado de IExpress a Inno Setup 6.
-- Detección incremental corregida para sesiones grandes y eventos reales de inicio, atención, finalización y error.
+- Fixed corrupted **Check for updates** text under Windows PowerShell 5.1.
+- Normalized PowerShell scripts to UTF-8 with BOM to preserve Spanish text correctly.
+- Added an English and Spanish interface with a persistent language selector.
+- Migrated the bilingual installer from IExpress to Inno Setup 6.
+- Fixed incremental detection for large sessions and real start, attention, completion, and error events.
 
 ## 1.1.0 - 2026-08-12
 
-- Opción **Buscar actualizaciones** en el menú contextual.
-- Comprobación segura de GitHub Releases sin instalación automática.
-- Documentación ampliada y preview de los distintos estados.
-- Proceso reproducible para construir los instaladores con el nombre CodexPet.
+- Added **Check for updates** to the context menu.
+- Added secure GitHub Releases checks without automatic installation.
+- Expanded documentation and added a preview of the different states.
+- Added a reproducible release process using the CodexPet project name.
 
 ## 1.0.0 - 2026-08-12
 
-- Primera versión pública.
-- Estados animados basados en los eventos de sesión de Codex.
-- Selector con ocho mascotas.
-- Persistencia de posición, tamaño y personaje elegido.
-- Observador estable para procesos principales y auxiliares de Codex.
+- First public release.
+- Animated states based on Codex session events.
+- Selector with eight pets.
+- Persistent position, size, and selected pet.
+- Stable watcher for primary and helper Codex processes.

@@ -45,8 +45,9 @@ Source: "..\Stop-CodexPet.ps1"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\Start-CodexPetWatcher.vbs"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\Start-CodexPet.cmd"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\README.md"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\README.en.md"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\README.es.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\CHANGELOG.md"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\CHANGELOG.es.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\VERSION"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\assets\*"; DestDir: "{app}\assets"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\docs\*"; DestDir: "{app}\docs"; Flags: ignoreversion recursesubdirs createallsubdirs
