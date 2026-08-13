@@ -85,7 +85,7 @@ $errors
 Para generar `dist\CodexPet-Setup.exe` y `dist\CodexPet-Setup.zip` necesitas [Inno Setup 6](https://jrsoftware.org/isinfo.php):
 
 ```powershell
-.\Build-Release.ps1 -Version 1.2.1
+.\Build-Release.ps1 -Version 1.2.2
 ```
 
 ## Arquitectura

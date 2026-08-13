@@ -1,5 +1,11 @@
 # Historial de cambios
 
+## 1.2.2 - 2026-08-12
+
+- Detección en tiempo real de autorizaciones pendientes mediante la telemetría SQLite local de Codex.
+- Las autorizaciones ya recordadas no activan falsamente el estado **Necesita atención**.
+- El tiempo de **Tarea terminada** se calcula desde el evento real, incluso cuando Codex conserva una fecha antigua en el archivo de sesión activo.
+
 ## 1.2.1 - 2026-08-12
 
 - El estado **Tarea terminada** permanece visible hasta que comienza otra tarea o transcurren diez minutos de inactividad.

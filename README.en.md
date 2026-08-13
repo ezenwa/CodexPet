@@ -55,7 +55,7 @@ CodexPet processes event types locally from `%USERPROFILE%\.codex\sessions`. It 
 CodexPet is built with PowerShell and WPF. Release installers require [Inno Setup 6](https://jrsoftware.org/isinfo.php).
 
 ```powershell
-.\Build-Release.ps1 -Version 1.2.1
+.\Build-Release.ps1 -Version 1.2.2
 ```
 
 See [README.md](README.md) for Spanish documentation and [CHANGELOG.md](CHANGELOG.md) for release history.

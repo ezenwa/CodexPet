@@ -4,7 +4,7 @@
 function Event([string]$Type, [string]$Name = '') {
     $payload = [ordered]@{ type = $Type }
     if ($Name) { $payload.name = $Name }
-    return (@{ type='event_msg'; payload=$payload } | ConvertTo-Json -Compress)
+    return ([ordered]@{ timestamp=[DateTime]::UtcNow.ToString('o'); type='event_msg'; payload=$payload } | ConvertTo-Json -Compress)
 }
 function Assert-State([string]$Expected, [string]$Actual, [string]$Case) {
     if ($Expected -ne $Actual) { throw "$Case esperaba $Expected y devolvió $Actual" }
@@ -17,8 +17,11 @@ Assert-State Input (Update-CodexPetSessionState $session @((Event function_call 
 Assert-State Working (Update-CodexPetSessionState $session @((Event function_call_output))) 'respuesta del usuario'
 Assert-State Ready (Update-CodexPetSessionState $session @((Event task_complete))) 'finalización'
 Assert-State Ready (Update-CodexPetSessionState $session @()) 'finalización persistente'
+if ($session.TerminalUtc -eq [DateTime]::MinValue) { throw 'La finalización no conservó la hora del evento' }
 Assert-State Working (Update-CodexPetSessionState $session @((Event task_started))) 'segundo inicio'
 Assert-State Failed (Update-CodexPetSessionState $session @((Event turn_aborted))) 'aborto'
+$missingDatabase = Join-Path ([IO.Path]::GetTempPath()) ("missing-{0}.sqlite" -f [guid]::NewGuid())
+if (Test-CodexPetApprovalPending $missingDatabase) { throw 'Una base inexistente no puede indicar atención' }
 
 $largeOutput = '{"type":"response_item","payload":{"type":"custom_tool_call_output","output":"' + ('x' * 1000000) + '"}}'
 $performanceState = New-CodexPetSessionState

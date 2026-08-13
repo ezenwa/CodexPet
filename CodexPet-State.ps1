@@ -6,7 +6,46 @@
         TurnActive     = $false
         WaitingForUser = $false
         TerminalState  = 'Idle'
+        TerminalUtc    = [DateTime]::MinValue
     }
+}
+
+if (-not ('CodexPetNativeSqlite' -as [type])) {
+    Add-Type -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+public static class CodexPetNativeSqlite {
+    [DllImport("winsqlite3.dll", CallingConvention=CallingConvention.Cdecl)]
+    static extern int sqlite3_open_v2([MarshalAs(UnmanagedType.LPStr)] string filename, out IntPtr database, int flags, IntPtr vfs);
+    [DllImport("winsqlite3.dll", CallingConvention=CallingConvention.Cdecl)]
+    static extern int sqlite3_prepare_v2(IntPtr database, [MarshalAs(UnmanagedType.LPStr)] string sql, int bytes, out IntPtr statement, IntPtr tail);
+    [DllImport("winsqlite3.dll", CallingConvention=CallingConvention.Cdecl)] static extern int sqlite3_step(IntPtr statement);
+    [DllImport("winsqlite3.dll", CallingConvention=CallingConvention.Cdecl)] static extern long sqlite3_column_int64(IntPtr statement, int column);
+    [DllImport("winsqlite3.dll", CallingConvention=CallingConvention.Cdecl)] static extern int sqlite3_finalize(IntPtr statement);
+    [DllImport("winsqlite3.dll", CallingConvention=CallingConvention.Cdecl)] static extern int sqlite3_close(IntPtr database);
+    public static long ScalarInt64(string path, string sql) {
+        IntPtr database;
+        if (sqlite3_open_v2(path, out database, 1, IntPtr.Zero) != 0) return -1;
+        try {
+            IntPtr statement;
+            if (sqlite3_prepare_v2(database, sql, -1, out statement, IntPtr.Zero) != 0) return -2;
+            try { return sqlite3_step(statement) == 100 ? sqlite3_column_int64(statement, 0) : -3; }
+            finally { sqlite3_finalize(statement); }
+        } finally { sqlite3_close(database); }
+    }
+}
+'@
+}
+
+function Test-CodexPetApprovalPending([string]$DatabasePath) {
+    if (-not (Test-Path -LiteralPath $DatabasePath)) { return $false }
+    $requestSql = "SELECT id FROM logs WHERE target='codex_core::stream_events_utils' AND feedback_log_body LIKE '%handle_output_item_done: ToolCall:%' AND feedback_log_body LIKE '%sandbox_permissions%require_escalated%' ORDER BY id DESC LIMIT 1"
+    $resolutionSql = "SELECT id FROM logs WHERE (target='codex_core::session::handlers' AND feedback_log_body LIKE '%op: ExecApproval {%') OR (target='codex_core::tools::parallel' AND feedback_log_body LIKE '%tool call completed%') ORDER BY id DESC LIMIT 1"
+    try {
+        $request = [CodexPetNativeSqlite]::ScalarInt64($DatabasePath, $requestSql)
+        $resolution = [CodexPetNativeSqlite]::ScalarInt64($DatabasePath, $resolutionSql)
+        return $request -gt 0 -and $request -gt $resolution
+    } catch { return $false }
 }
 
 function Update-CodexPetSessionState($Session, [string[]]$Lines) {
@@ -23,6 +62,16 @@ function Update-CodexPetSessionState($Session, [string[]]$Lines) {
         )
         if (-not $payloadMatch.Success) { continue }
         $eventType = $payloadMatch.Groups['type'].Value
+        $timestampMatch = [regex]::Match($line, '"timestamp"\s*:\s*"(?<timestamp>[^"]+)"')
+        $eventUtc = [DateTime]::UtcNow
+        if ($timestampMatch.Success) {
+            [DateTime]::TryParse(
+                $timestampMatch.Groups['timestamp'].Value,
+                [Globalization.CultureInfo]::InvariantCulture,
+                [Globalization.DateTimeStyles]::AdjustToUniversal,
+                [ref]$eventUtc
+            ) | Out-Null
+        }
 
         switch -Regex ($eventType) {
             '^(task_started|turn_started)$' {
@@ -35,12 +84,14 @@ function Update-CodexPetSessionState($Session, [string[]]$Lines) {
                 $Session.TurnActive = $false
                 $Session.WaitingForUser = $false
                 $Session.TerminalState = 'Ready'
+                $Session.TerminalUtc = $eventUtc.ToUniversalTime()
                 continue
             }
             '^(turn_aborted|error|failed)$' {
                 $Session.TurnActive = $false
                 $Session.WaitingForUser = $false
                 $Session.TerminalState = 'Failed'
+                $Session.TerminalUtc = $eventUtc.ToUniversalTime()
                 continue
             }
             '^(user_message|user_input|approval_response|elicitation_response)$' {
@@ -85,6 +136,7 @@ function Read-CodexPetSessionChanges($Session, [IO.FileInfo]$SessionFile) {
         $Session.TurnActive = $false
         $Session.WaitingForUser = $false
         $Session.TerminalState = 'Idle'
+        $Session.TerminalUtc = [DateTime]::MinValue
     }
     if ($SessionFile.Length -eq $Session.Offset) {
         return $(if ($Session.WaitingForUser) { 'Input' } elseif ($Session.TurnActive) { 'Working' } else { $Session.TerminalState })

@@ -4,7 +4,7 @@
     [int]$CodexProcessId = 0
 )
 Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase
-$script:appVersion = [Version]'1.2.1'
+$script:appVersion = [Version]'1.2.2'
 $script:releaseApiUrl = 'https://api.github.com/repos/ezenwa/CodexPet/releases/latest'
 Add-Type @'
 using System;
@@ -38,6 +38,7 @@ New-Item -ItemType Directory -Path $stateDir -Force | Out-Null
 $positionFile = Join-Path $stateDir 'window-position.json'
 $selectedPetFile = Join-Path $stateDir 'selected-pet.txt'
 $languageFile = Join-Path $stateDir 'language.txt'
+$codexLogDatabase = Join-Path $env:USERPROFILE '.codex\logs_2.sqlite'
 . (Join-Path $root 'CodexPet-State.ps1')
 $script:language = $(if ([Globalization.CultureInfo]::CurrentUICulture.TwoLetterISOLanguageName -eq 'es') { 'es' } else { 'en' })
 if (Test-Path -LiteralPath $languageFile) {
@@ -354,7 +355,10 @@ function Get-CodexState {
     $latest=Get-Item -LiteralPath $latest.FullName -ErrorAction SilentlyContinue
     if (-not $latest) { return 'Idle' }
     $state=Read-CodexPetSessionChanges $script:sessionStateCache $latest
-    if ($state -eq 'Ready' -and ($now-$latest.LastWriteTime).TotalMinutes -ge 10) { return 'Idle' }
+    if ($state -eq 'Working' -and (Test-CodexPetApprovalPending $codexLogDatabase)) { return 'Input' }
+    if ($state -eq 'Ready' -and
+        $script:sessionStateCache.TerminalUtc -ne [DateTime]::MinValue -and
+        ([DateTime]::UtcNow-$script:sessionStateCache.TerminalUtc).TotalMinutes -ge 10) { return 'Idle' }
     return $state
 }
 function Find-CodexPetUpdate {
