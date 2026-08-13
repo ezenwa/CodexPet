@@ -2,6 +2,9 @@
 
 Una mascota animada para Codex en Windows. CodexPet detecta la actividad de Codex, refleja su estado en tiempo real y permanece sobre el escritorio sin interrumpir tu trabajo.
 
+> [!IMPORTANT]
+> Las mascotas y los recursos visuales oficiales incluidos pertenecen a OpenAI/Codex y a sus respectivos titulares. CodexPet no reclama autoría ni propiedad sobre ellos: es un proyecto independiente y no oficial que ofrece una forma alternativa de mostrarlos en Windows.
+
 ![Estados de CodexPet](docs/images/codexpet-states.png)
 
 ## Características
@@ -54,6 +57,10 @@ Abre el menú contextual y selecciona **Buscar actualizaciones**. CodexPet consu
 ## Privacidad y seguridad
 
 CodexPet procesa localmente los registros de sesión ubicados en `%USERPROFILE%\.codex\sessions` para identificar tipos de evento. No envía prompts, respuestas ni contenido de archivos. La comprobación de actualizaciones solo comunica a GitHub una solicitud HTTPS estándar.
+
+## Atribución
+
+Las mascotas distribuidas con CodexPet son recursos visuales oficiales de Codex. Sus diseños, nombres y archivos originales pertenecen a OpenAI/Codex y a sus respectivos titulares. Este repositorio únicamente los presenta mediante una interfaz de escritorio alternativa; no está afiliado, patrocinado ni respaldado oficialmente por OpenAI.
 
 ## Desarrollo
 
