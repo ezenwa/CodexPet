@@ -18,6 +18,7 @@ Una mascota animada para Codex en Windows. CodexPet detecta la actividad de Code
 - Inicio automático con Windows para el usuario actual.
 - Búsqueda manual de nuevas versiones desde GitHub Releases.
 - Interfaz disponible en inglés y español, seleccionable desde el menú.
+- Cuadro Acerca de localizado con el autor y la atribución de las mascotas oficiales.
 - Instalación por usuario; no requiere privilegios de administrador.
 
 ## Requisitos
@@ -85,7 +86,7 @@ $errors
 Para generar `dist\CodexPet-Setup.exe` y `dist\CodexPet-Setup.zip` necesitas [Inno Setup 6](https://jrsoftware.org/isinfo.php):
 
 ```powershell
-.\Build-Release.ps1 -Version 1.2.2
+.\Build-Release.ps1 -Version 1.2.3
 ```
 
 ## Arquitectura

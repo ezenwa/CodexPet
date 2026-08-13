@@ -2,6 +2,11 @@
 
 [Historial en español](CHANGELOG.es.md)
 
+## 1.2.3 - 2026-08-12
+
+- Added a localized **About** menu entry.
+- The About dialog identifies Joshua Ezenwa as the author and attributes the official mascots and visual assets to OpenAI/Codex and their respective owners.
+
 ## 1.2.2 - 2026-08-12
 
 - Real-time detection of pending approvals through local Codex SQLite telemetry.

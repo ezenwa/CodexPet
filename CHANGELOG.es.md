@@ -2,6 +2,11 @@
 
 [Changelog in English](CHANGELOG.md)
 
+## 1.2.3 - 2026-08-12
+
+- Se agregó la opción localizada **About / Acerca de** al menú contextual.
+- El cuadro identifica a Joshua Ezenwa como autor y atribuye las mascotas y recursos visuales oficiales a OpenAI/Codex y sus respectivos titulares.
+
 ## 1.2.2 - 2026-08-12
 
 - Detección en tiempo real de autorizaciones pendientes mediante la telemetría SQLite local de Codex.

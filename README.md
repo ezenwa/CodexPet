@@ -18,6 +18,7 @@ An animated Codex desktop pet for Windows. CodexPet detects Codex activity, refl
 - Per-user automatic startup with Windows.
 - Manual update checks through GitHub Releases.
 - English and Spanish interface, switchable from the context menu.
+- Localized About dialog with the author and official mascot attribution.
 - Per-user installation without administrator privileges.
 
 ## Requirements
@@ -85,7 +86,7 @@ $errors
 Generating `dist\CodexPet-Setup.exe` and `dist\CodexPet-Setup.zip` requires [Inno Setup 6](https://jrsoftware.org/isinfo.php):
 
 ```powershell
-.\Build-Release.ps1 -Version 1.2.2
+.\Build-Release.ps1 -Version 1.2.3
 ```
 
 ## Architecture

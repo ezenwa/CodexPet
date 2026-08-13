@@ -4,7 +4,7 @@
     [int]$CodexProcessId = 0
 )
 Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase
-$script:appVersion = [Version]'1.2.2'
+$script:appVersion = [Version]'1.2.3'
 $script:releaseApiUrl = 'https://api.github.com/repos/ezenwa/CodexPet/releases/latest'
 Add-Type @'
 using System;
@@ -48,13 +48,15 @@ if (Test-Path -LiteralPath $languageFile) {
 $script:translations = @{
     es = @{
         StatusWorking='CODEX TRABAJANDO'; StatusInput='NECESITA ATENCIÓN'; StatusReady='TAREA TERMINADA'; StatusFailed='CODEX BLOQUEADO'; StatusIdle='CODEX EN ESPERA'; StatusOffline='CODEX DESCONECTADO'
-        ChoosePet='Elegir mascota'; StartWindows='Iniciar con Windows'; CheckUpdates='Buscar actualizaciones...'; ClosePet='Cerrar mascota'; Language='Idioma'; English='Inglés'; Spanish='Español'
+        ChoosePet='Elegir mascota'; StartWindows='Iniciar con Windows'; CheckUpdates='Buscar actualizaciones...'; ClosePet='Cerrar mascota'; Language='Idioma'; English='Inglés'; Spanish='Español'; About='Acerca de'
+        AboutTitle='Acerca de CodexPet'; AboutMessage="CodexPet v{0}`n`nAutor: Joshua Ezenwa`n`nCodexPet es un proyecto independiente y no oficial.`n`nLas mascotas y los recursos visuales oficiales pertenecen a OpenAI/Codex y a sus respectivos titulares."
         InvalidVersion='GitHub devolvió una versión no válida: {0}'; NewVersionMessage="Hay una nueva versión de CodexPet: v{0}.`n`nVersión instalada: v{1}.`n`n¿Quieres abrir la página oficial de descarga?"; UpdateAvailable='Actualización disponible'
         UpToDateMessage='CodexPet está actualizado (v{0}).'; UpdateTitle='Buscar actualizaciones'; UpdateError="No fue posible buscar actualizaciones.`n`n{0}"
     }
     en = @{
         StatusWorking='CODEX WORKING'; StatusInput='NEEDS ATTENTION'; StatusReady='TASK COMPLETE'; StatusFailed='CODEX BLOCKED'; StatusIdle='CODEX IDLE'; StatusOffline='CODEX OFFLINE'
-        ChoosePet='Choose pet'; StartWindows='Start with Windows'; CheckUpdates='Check for updates...'; ClosePet='Close pet'; Language='Language'; English='English'; Spanish='Spanish'
+        ChoosePet='Choose pet'; StartWindows='Start with Windows'; CheckUpdates='Check for updates...'; ClosePet='Close pet'; Language='Language'; English='English'; Spanish='Spanish'; About='About'
+        AboutTitle='About CodexPet'; AboutMessage="CodexPet v{0}`n`nAuthor: Joshua Ezenwa`n`nCodexPet is an independent, unofficial project.`n`nThe official mascots and visual assets belong to OpenAI/Codex and their respective owners."
         InvalidVersion='GitHub returned an invalid version: {0}'; NewVersionMessage="A new CodexPet version is available: v{0}.`n`nInstalled version: v{1}.`n`nDo you want to open the official download page?"; UpdateAvailable='Update available'
         UpToDateMessage='CodexPet is up to date (v{0}).'; UpdateTitle='Check for updates'; UpdateError="Unable to check for updates.`n`n{0}"
     }
@@ -428,6 +430,17 @@ $languageItem=New-Object Windows.Controls.MenuItem
 $englishLanguageItem=New-Object Windows.Controls.MenuItem; $englishLanguageItem.IsCheckable=$true
 $spanishLanguageItem=New-Object Windows.Controls.MenuItem; $spanishLanguageItem.IsCheckable=$true
 [void]$languageItem.Items.Add($englishLanguageItem); [void]$languageItem.Items.Add($spanishLanguageItem)
+$aboutItem=New-Object Windows.Controls.MenuItem
+$aboutItem.Add_Click({
+    $message=(Get-CodexPetText 'AboutMessage') -f $script:appVersion
+    [void][Windows.MessageBox]::Show(
+        $window,
+        $message,
+        (Get-CodexPetText 'AboutTitle'),
+        [Windows.MessageBoxButton]::OK,
+        [Windows.MessageBoxImage]::Information
+    )
+})
 $exitItem=New-Object Windows.Controls.MenuItem; $exitItem.Add_Click({$window.Close()})
 function Set-CodexPetLanguage([string]$language) {
     if ($language -notin @('en', 'es')) { return }
@@ -439,6 +452,7 @@ function Set-CodexPetLanguage([string]$language) {
     $languageItem.Header=Get-CodexPetText 'Language'
     $englishLanguageItem.Header=Get-CodexPetText 'English'
     $spanishLanguageItem.Header=Get-CodexPetText 'Spanish'
+    $aboutItem.Header=Get-CodexPetText 'About'
     $exitItem.Header=Get-CodexPetText 'ClosePet'
     $englishLanguageItem.IsChecked=($language -eq 'en')
     $spanishLanguageItem.IsChecked=($language -eq 'es')
@@ -447,7 +461,7 @@ function Set-CodexPetLanguage([string]$language) {
 $englishLanguageItem.Add_Click({ Set-CodexPetLanguage 'en' })
 $spanishLanguageItem.Add_Click({ Set-CodexPetLanguage 'es' })
 Set-CodexPetLanguage $script:language
-[void]$context.Items.Add($petSelectorItem); [void]$context.Items.Add((New-Object Windows.Controls.Separator)); [void]$context.Items.Add($startupItem); [void]$context.Items.Add($updateItem); [void]$context.Items.Add($languageItem); [void]$context.Items.Add((New-Object Windows.Controls.Separator)); [void]$context.Items.Add($exitItem); $card.ContextMenu=$context
+[void]$context.Items.Add($petSelectorItem); [void]$context.Items.Add((New-Object Windows.Controls.Separator)); [void]$context.Items.Add($startupItem); [void]$context.Items.Add($updateItem); [void]$context.Items.Add($languageItem); [void]$context.Items.Add($aboutItem); [void]$context.Items.Add((New-Object Windows.Controls.Separator)); [void]$context.Items.Add($exitItem); $card.ContextMenu=$context
 $window.Add_MouseLeftButtonDown({
     # The animation/state timer shares WPF's UI thread with DragMove. Suspending
     # it prevents session scans and frame updates from interrupting native drag.
