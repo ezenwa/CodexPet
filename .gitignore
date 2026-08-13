@@ -6,6 +6,7 @@ window-position.json
 
 # Generated release artifacts
 dist/
+.build/
 installer/CodexPet-Payload.zip
 CodexPet-Payload.zip
 *.cab

@@ -6,7 +6,8 @@ $programsDir = [Environment]::GetFolderPath('Programs')
 $desktopDir = [Environment]::GetFolderPath('Desktop')
 $powerShellExe = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
 $wscriptExe = Join-Path $env:SystemRoot 'System32\wscript.exe'
-$startupShortcut = Join-Path ([Environment]::GetFolderPath('Startup')) 'Codex Pet.lnk'
+$startupShortcut = Join-Path ([Environment]::GetFolderPath('Startup')) 'CodexPet.lnk'
+$legacyStartupShortcut = Join-Path ([Environment]::GetFolderPath('Startup')) 'Codex Pet.lnk'
 
 if (Test-Path -LiteralPath (Join-Path $installDir 'codexpet.pid')) {
     $oldPid = [int](Get-Content -LiteralPath (Join-Path $installDir 'codexpet.pid') -Raw)
@@ -16,21 +17,21 @@ New-Item -ItemType Directory -Path $installDir -Force | Out-Null
 Expand-Archive -LiteralPath $PayloadPath -DestinationPath $installDir -Force
 
 $shell = New-Object -ComObject WScript.Shell
-foreach ($shortcutPath in @((Join-Path $desktopDir 'Codex Pet.lnk'), (Join-Path $programsDir 'Codex Pet.lnk'))) {
+foreach ($shortcutPath in @((Join-Path $desktopDir 'CodexPet.lnk'), (Join-Path $programsDir 'CodexPet.lnk'))) {
     $shortcut = $shell.CreateShortcut($shortcutPath)
     $shortcut.TargetPath = $powerShellExe
     $shortcut.Arguments = "-NoLogo -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$(Join-Path $installDir 'CodexPet.ps1')`" -Startup"
     $shortcut.WorkingDirectory = $installDir
     $shortcut.Save()
 }
-$uninstallShortcut = $shell.CreateShortcut((Join-Path $programsDir 'Desinstalar Codex Pet.lnk'))
+$uninstallShortcut = $shell.CreateShortcut((Join-Path $programsDir 'Desinstalar CodexPet.lnk'))
 $uninstallShortcut.TargetPath = $powerShellExe
 $uninstallShortcut.Arguments = "-NoLogo -NoProfile -ExecutionPolicy Bypass -File `"$(Join-Path $installDir 'Uninstall-CodexPet.ps1')`""
 $uninstallShortcut.WorkingDirectory = $installDir
 $uninstallShortcut.Save()
 
-if (Test-Path -LiteralPath $startupShortcut) {
-    Remove-Item -LiteralPath $startupShortcut -Force
+foreach ($obsoleteShortcut in @($startupShortcut, $legacyStartupShortcut, (Join-Path $desktopDir 'Codex Pet.lnk'), (Join-Path $programsDir 'Codex Pet.lnk'), (Join-Path $programsDir 'Desinstalar Codex Pet.lnk'))) {
+    if (Test-Path -LiteralPath $obsoleteShortcut) { Remove-Item -LiteralPath $obsoleteShortcut -Force }
 }
 
 $runKeyPath = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run'
@@ -40,4 +41,4 @@ New-Item -Path $runKeyPath -Force | Out-Null
 Set-ItemProperty -Path $runKeyPath -Name 'CodexPetWatcher' -Value $watcherCommand
 
 Start-Process -FilePath $wscriptExe -ArgumentList @('//B','//Nologo',$watcherLauncher) -WorkingDirectory $installDir -WindowStyle Hidden
-[System.Windows.MessageBox]::Show('Codex Pet se instaló correctamente.','Codex Pet') | Out-Null
+[System.Windows.MessageBox]::Show('CodexPet se instaló correctamente.','CodexPet') | Out-Null

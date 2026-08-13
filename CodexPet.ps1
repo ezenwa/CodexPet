@@ -4,6 +4,8 @@ param(
     [int]$CodexProcessId = 0
 )
 Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase
+$script:appVersion = [Version]'1.1.0'
+$script:releaseApiUrl = 'https://api.github.com/repos/ezenwa/CodexPet/releases/latest'
 Add-Type @'
 using System;
 using System.Runtime.InteropServices;
@@ -402,6 +404,47 @@ function Get-CodexState {
     $script:sessionStateCache.State=$state
     return $state
 }
+function Find-CodexPetUpdate {
+    try {
+        $headers = @{
+            Accept       = 'application/vnd.github+json'
+            'User-Agent' = "CodexPet/$($script:appVersion)"
+        }
+        $release = Invoke-RestMethod -Uri $script:releaseApiUrl -Headers $headers -Method Get -TimeoutSec 15
+        $tag = [string]$release.tag_name
+        $versionText = $tag -replace '^[vV]', ''
+        $latestVersion = $null
+        if (-not [Version]::TryParse($versionText, [ref]$latestVersion)) {
+            throw "GitHub devolvió una versión no válida: $tag"
+        }
+
+        if ($latestVersion -gt $script:appVersion) {
+            $answer = [Windows.MessageBox]::Show(
+                "Hay una nueva versión de CodexPet: v$latestVersion.`n`nVersión instalada: v$($script:appVersion)`n`n¿Quieres abrir la página oficial de descarga?",
+                'Actualización disponible',
+                [Windows.MessageBoxButton]::YesNo,
+                [Windows.MessageBoxImage]::Information
+            )
+            if ($answer -eq [Windows.MessageBoxResult]::Yes) {
+                Start-Process ([string]$release.html_url)
+            }
+        } else {
+            [Windows.MessageBox]::Show(
+                "CodexPet está actualizado (v$($script:appVersion)).",
+                'Buscar actualizaciones',
+                [Windows.MessageBoxButton]::OK,
+                [Windows.MessageBoxImage]::Information
+            ) | Out-Null
+        }
+    } catch {
+        [Windows.MessageBox]::Show(
+            "No fue posible buscar actualizaciones.`n`n$($_.Exception.Message)",
+            'CodexPet',
+            [Windows.MessageBoxButton]::OK,
+            [Windows.MessageBoxImage]::Warning
+        ) | Out-Null
+    }
+}
 $context=New-Object Windows.Controls.ContextMenu
 $petSelectorItem=New-Object Windows.Controls.MenuItem; $petSelectorItem.Header='Elegir mascota'
 foreach ($petKey in $petCatalog.Keys) {
@@ -423,8 +466,9 @@ $startupItem.Add_Click({
         Remove-ItemProperty -Path $runKeyPath -Name $runValueName -ErrorAction SilentlyContinue
     }
 })
+$updateItem=New-Object Windows.Controls.MenuItem; $updateItem.Header="Buscar actualizaciones… (v$($script:appVersion))"; $updateItem.Add_Click({ Find-CodexPetUpdate })
 $exitItem=New-Object Windows.Controls.MenuItem; $exitItem.Header='Cerrar mascota'; $exitItem.Add_Click({$window.Close()})
-[void]$context.Items.Add($petSelectorItem); [void]$context.Items.Add((New-Object Windows.Controls.Separator)); [void]$context.Items.Add($startupItem); [void]$context.Items.Add((New-Object Windows.Controls.Separator)); [void]$context.Items.Add($exitItem); $card.ContextMenu=$context
+[void]$context.Items.Add($petSelectorItem); [void]$context.Items.Add((New-Object Windows.Controls.Separator)); [void]$context.Items.Add($startupItem); [void]$context.Items.Add($updateItem); [void]$context.Items.Add((New-Object Windows.Controls.Separator)); [void]$context.Items.Add($exitItem); $card.ContextMenu=$context
 $window.Add_MouseLeftButtonDown({
     # The animation/state timer shares WPF's UI thread with DragMove. Suspending
     # it prevents session scans and frame updates from interrupting native drag.

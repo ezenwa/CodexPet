@@ -8,14 +8,14 @@ if (Test-Path -LiteralPath $pidPath) {
 Get-CimInstance Win32_Process -Filter "Name = 'powershell.exe' OR Name = 'pwsh.exe'" -ErrorAction SilentlyContinue |
     Where-Object { $_.CommandLine -like '*CodexPet-Watcher.ps1*' } |
     ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
-$startupShortcut = Join-Path ([Environment]::GetFolderPath('Startup')) 'Codex Pet.lnk'
+$startupShortcut = Join-Path ([Environment]::GetFolderPath('Startup')) 'CodexPet.lnk'
 $programsDir = [Environment]::GetFolderPath('Programs')
 $desktopDir = [Environment]::GetFolderPath('Desktop')
-foreach ($path in @($startupShortcut, (Join-Path $programsDir 'Codex Pet.lnk'), (Join-Path $programsDir 'Desinstalar Codex Pet.lnk'), (Join-Path $desktopDir 'Codex Pet.lnk'))) {
+foreach ($path in @($startupShortcut, (Join-Path $programsDir 'CodexPet.lnk'), (Join-Path $programsDir 'Desinstalar CodexPet.lnk'), (Join-Path $desktopDir 'CodexPet.lnk'), (Join-Path ([Environment]::GetFolderPath('Startup')) 'Codex Pet.lnk'), (Join-Path $programsDir 'Codex Pet.lnk'), (Join-Path $programsDir 'Desinstalar Codex Pet.lnk'), (Join-Path $desktopDir 'Codex Pet.lnk'))) {
     Remove-Item -LiteralPath $path -Force -ErrorAction SilentlyContinue
 }
 Remove-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run' -Name 'CodexPetWatcher' -ErrorAction SilentlyContinue
 $cleanup = "Start-Sleep -Milliseconds 800; Remove-Item -LiteralPath '$($installDir.Replace("'","''"))' -Recurse -Force"
 Start-Process -FilePath $powerShellExe -ArgumentList @('-NoLogo','-NoProfile','-WindowStyle','Hidden','-Command',$cleanup) -WorkingDirectory $env:TEMP -WindowStyle Hidden
 Add-Type -AssemblyName PresentationFramework
-[System.Windows.MessageBox]::Show('Codex Pet se desinstaló correctamente.','Codex Pet') | Out-Null
+[System.Windows.MessageBox]::Show('CodexPet se desinstaló correctamente.','CodexPet') | Out-Null
