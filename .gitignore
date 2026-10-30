@@ -1,19 +1,10 @@
-# Runtime state
-*.pid
-watcher.log
-close-with-codex.request
-window-position.json
+# Cargo outputs, local Rust tools and distributable packages
+/target/
+/.build/
+/dist/
 
-# Generated release artifacts
-dist/
-.build/
-installer/CodexPet-Payload.zip
-CodexPet-Payload.zip
-*.cab
-*.DDF
-
-# Editor and OS files
-.vs/
-.vscode/
+# Local editor and Windows metadata
+/.vs/
+/.vscode/
 Thumbs.db
 Desktop.ini

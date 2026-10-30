@@ -2,6 +2,26 @@
 
 [Changelog in English](CHANGELOG.md)
 
+## 2.1.0 - 2026-10-30
+
+- Se agregó **Minimizar a la bandeja**, con icono de la mascota, estado localizado y opciones para mostrar o cerrar.
+- La mascota permanece minimizada aunque cambie la actividad; el icono se recupera si Explorer se reinicia.
+- La integración nativa se dividió en módulos de aplicación, gráficos, procesos, inicio, actualizaciones y bandeja.
+- Los scripts reutilizables se agruparon en `tools/` y los auxiliares del instalador en `installer/`, actualizando sus rutas.
+- Los 72 PNG de cada mascota quedaron en su carpeta; se eliminaron Sixel sin uso, lanzadores obsoletos, scripts de un solo uso, respaldos y temporales.
+- Se documentaron la arquitectura, el desarrollo y la ubicación de archivos nuevos; se unificaron las reglas de texto.
+- Las verificaciones eliminan sus temporales y Cargo.toml es la única fuente de la versión.
+
+## 2.0.0 - 2026-10-29
+
+- Se reemplazó la aplicación PowerShell/WPF por un ejecutable nativo Rust/Win32.
+- El observador está integrado; cerrar la mascota termina también la supervisión.
+- Se conservaron las ocho mascotas, las animaciones y las preferencias anteriores.
+- Las preguntas y aprobaciones se relacionan por llamada; varias sesiones participan en el estado.
+- La lectura de registros y las actualizaciones se ejecutan fuera del hilo de interfaz.
+- Se agregó empaquetado portátil, comprobaciones de ventana nativa y pruebas de regresión.
+- Cargo.toml determina la versión de la aplicación y del instalador.
+
 ## 1.2.3 - 2026-08-12
 
 - Se agregó la opción localizada **About / Acerca de** al menú contextual.

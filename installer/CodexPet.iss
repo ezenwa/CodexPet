@@ -1,31 +1,30 @@
 #ifndef MyAppVersion
-  #define MyAppVersion "1.2.3"
+  #define MyAppVersion "2.1.0"
 #endif
-
-#define MyAppName "CodexPet"
-#define MyAppPublisher "ezenwa"
-#define MyAppURL "https://github.com/ezenwa/CodexPet"
 
 [Setup]
 AppId={{A913EB65-C10B-4C1F-8845-627C4921488B}
-AppName={#MyAppName}
+AppName=CodexPet
 AppVersion={#MyAppVersion}
-AppVerName={#MyAppName} {#MyAppVersion}
-AppPublisher={#MyAppPublisher}
-AppPublisherURL={#MyAppURL}
-AppSupportURL={#MyAppURL}/issues
-AppUpdatesURL={#MyAppURL}/releases/latest
+AppVerName=CodexPet {#MyAppVersion}
+AppPublisher=ezenwa
+AppPublisherURL=https://github.com/ezenwa/CodexPet
+AppSupportURL=https://github.com/ezenwa/CodexPet/issues
+AppUpdatesURL=https://github.com/ezenwa/CodexPet/releases/latest
 DefaultDirName={localappdata}\CodexPet
 DefaultGroupName=CodexPet
 DisableProgramGroupPage=yes
 PrivilegesRequired=lowest
+ArchitecturesAllowed=x64compatible
+ArchitecturesInstallIn64BitMode=x64compatible
 OutputDir=..\dist
 OutputBaseFilename=CodexPet-Setup
 Compression=lzma2/ultra64
 SolidCompression=yes
 WizardStyle=modern
 SetupLogging=yes
-CloseApplications=no
+CloseApplications=yes
+CloseApplicationsFilter=CodexPet.exe
 RestartApplications=no
 UninstallDisplayName=CodexPet
 VersionInfoVersion={#MyAppVersion}
@@ -38,49 +37,65 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "spanish"; MessagesFile: "compiler:Languages\Spanish.isl"
 
 [Files]
-Source: "..\CodexPet.ps1"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\CodexPet-State.ps1"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\CodexPet-Watcher.ps1"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\Stop-CodexPet.ps1"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\Start-CodexPetWatcher.vbs"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\Start-CodexPet.cmd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\README.md"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\README.es.md"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\CHANGELOG.md"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\CHANGELOG.es.md"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\VERSION"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\assets\*"; DestDir: "{app}\assets"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "..\docs\*"; DestDir: "{app}\docs"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\dist\CodexPet\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "Stop-CodexPet.ps1"; Flags: dontcopy
 Source: "language.en.txt"; DestDir: "{userappdata}\CodexPet"; DestName: "language.txt"; Languages: english; Flags: onlyifdoesntexist
 Source: "language.es.txt"; DestDir: "{userappdata}\CodexPet"; DestName: "language.txt"; Languages: spanish; Flags: onlyifdoesntexist
 
 [Icons]
-Name: "{autodesktop}\CodexPet"; Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoLogo -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File ""{app}\CodexPet.ps1"" -Startup"; WorkingDir: "{app}"
-Name: "{group}\CodexPet"; Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoLogo -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File ""{app}\CodexPet.ps1"" -Startup"; WorkingDir: "{app}"
+Name: "{autodesktop}\CodexPet"; Filename: "{app}\CodexPet.exe"; WorkingDir: "{app}"
+Name: "{group}\CodexPet"; Filename: "{app}\CodexPet.exe"; WorkingDir: "{app}"
 Name: "{group}\{cm:UninstallProgram,CodexPet}"; Filename: "{uninstallexe}"
 
 [Registry]
-Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "CodexPetWatcher"; ValueData: """{sys}\wscript.exe"" //B //Nologo ""{app}\Start-CodexPetWatcher.vbs"""; Flags: uninsdeletevalue
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "CodexPetWatcher"; ValueData: """{app}\CodexPet.exe"" --watch"; Flags: uninsdeletevalue
 
 [Run]
-Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoLogo -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File ""{app}\Stop-CodexPet.ps1"""; Flags: runhidden waituntilterminated
-Filename: "{sys}\wscript.exe"; Parameters: "//B //Nologo ""{app}\Start-CodexPetWatcher.vbs"""; WorkingDir: "{app}"; Flags: nowait runhidden
+Filename: "{app}\CodexPet.exe"; Parameters: "--watch"; WorkingDir: "{app}"; Flags: nowait
 
 [UninstallRun]
-Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoLogo -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File ""{app}\Stop-CodexPet.ps1"""; Flags: runhidden waituntilterminated; RunOnceId: "StopCodexPet"
+Filename: "{app}\CodexPet.exe"; Parameters: "--stop"; Flags: runhidden waituntilterminated; RunOnceId: "StopCodexPet"
 
 [InstallDelete]
+; Retire the old hashed asset layout before copying the current flat PNG folders.
+Type: filesandordirs; Name: "{app}\assets\pets\codex\sha256-*"
+Type: filesandordirs; Name: "{app}\assets\pets\bsod\sha256-*"
+Type: filesandordirs; Name: "{app}\assets\pets\dewey\sha256-*"
+Type: filesandordirs; Name: "{app}\assets\pets\fireball\sha256-*"
+Type: filesandordirs; Name: "{app}\assets\pets\null-signal\sha256-*"
+Type: filesandordirs; Name: "{app}\assets\pets\rocky\sha256-*"
+Type: filesandordirs; Name: "{app}\assets\pets\seedy\sha256-*"
+Type: filesandordirs; Name: "{app}\assets\pets\stacky\sha256-*"
+Type: files; Name: "{app}\README.en.md"
 Type: files; Name: "{userdesktop}\Codex Pet.lnk"
-Type: files; Name: "{userdesktop}\CodexPet.lnk"
 Type: files; Name: "{userprograms}\Codex Pet.lnk"
-Type: files; Name: "{userprograms}\CodexPet.lnk"
-Type: files; Name: "{userprograms}\Desinstalar Codex Pet.lnk"
-Type: files; Name: "{userprograms}\Desinstalar CodexPet.lnk"
 Type: files; Name: "{userstartup}\Codex Pet.lnk"
 Type: files; Name: "{userstartup}\CodexPet.lnk"
+Type: files; Name: "{app}\CodexPet.ps1"
+Type: files; Name: "{app}\CodexPet-State.ps1"
+Type: files; Name: "{app}\CodexPet-Watcher.ps1"
+Type: files; Name: "{app}\Start-CodexPetWatcher.vbs"
+Type: files; Name: "{app}\Start-CodexPet.cmd"
+Type: files; Name: "{app}\Stop-CodexPet.ps1"
 Type: files; Name: "{app}\Uninstall-CodexPet.ps1"
+Type: files; Name: "{app}\codexpet.pid"
+Type: files; Name: "{app}\close-with-codex.request"
 
 [UninstallDelete]
 Type: files; Name: "{app}\watcher.log"
-Type: files; Name: "{app}\codexpet.pid"
-Type: files; Name: "{app}\close-with-codex.request"
+
+[Code]
+function PrepareToInstall(var NeedsRestart: Boolean): String;
+var Code: Integer;
+begin
+  Result := '';
+  if DirExists(ExpandConstant('{app}')) then begin
+    ExtractTemporaryFile('Stop-CodexPet.ps1');
+    if not Exec(ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'),
+      '-NoLogo -NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File "' + ExpandConstant('{tmp}\Stop-CodexPet.ps1') + '" -InstallDir "' + ExpandConstant('{app}') + '"',
+      '', SW_HIDE, ewWaitUntilTerminated, Code) then
+      Result := 'Could not stop the previous CodexPet installation.'
+    else if Code <> 0 then
+      Result := 'The previous CodexPet installation could not be stopped.';
+  end;
+end;

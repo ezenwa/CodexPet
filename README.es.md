@@ -2,109 +2,58 @@
 
 [English documentation](README.md)
 
-Una mascota animada para Codex en Windows. CodexPet detecta la actividad de Codex, refleja su estado en tiempo real y permanece sobre el escritorio sin interrumpir tu trabajo.
+Una mascota de escritorio para Windows escrita en Rust. Representa la actividad local de Codex en una ventana transparente que permanece sobre el escritorio.
 
-> [!IMPORTANT]
-> Las mascotas y los recursos visuales oficiales incluidos pertenecen a OpenAI/Codex y a sus respectivos titulares. CodexPet no reclama autoría ni propiedad sobre ellos: es un proyecto independiente y no oficial que ofrece una forma alternativa de mostrarlos en Windows.
+> Las mascotas y recursos visuales oficiales pertenecen a OpenAI/Codex y a sus respectivos titulares. CodexPet es un proyecto independiente y no oficial.
 
 ![Estados de CodexPet](docs/images/codexpet-states.png)
 
-## Características
+## Funciones
 
-- Estados visuales ligados a eventos reales de Codex: espera, trabajo, atención requerida, tarea terminada, bloqueo/error y desconexión.
-- Ocho mascotas seleccionables: Codex, BSOD, Dewey, Fireball, Null Signal, Rocky, Seedy y Stacky.
-- Una sola ventana estable aunque Codex cree procesos auxiliares temporales.
-- Posición y tamaño persistentes entre sesiones y actualizaciones.
-- Inicio automático con Windows para el usuario actual.
-- Búsqueda manual de nuevas versiones desde GitHub Releases.
-- Interfaz disponible en inglés y español, seleccionable desde el menú.
-- Cuadro Acerca de localizado con el autor y la atribución de las mascotas oficiales.
-- Instalación por usuario; no requiere privilegios de administrador.
+- Ocho mascotas y seis estados: espera, trabajo, atención, finalización, fallo y desconexión.
+- Español e inglés; mascota, tamaño y posición persistentes.
+- Ventana Win32 y observador en segundo plano dentro de un único proceso.
+- **Minimizar a la bandeja** desde el menú contextual. Para volver, pulsa el icono o selecciona **Mostrar mascota**. La supervisión continúa mientras está oculta.
+- Varias sesiones participan en el estado; las preguntas y aprobaciones se relacionan por llamada.
+- Instalación por usuario, inicio con Windows y búsqueda manual de actualizaciones.
 
-## Requisitos
+## Instalación y uso
 
-- Windows 10 u 11.
-- Windows PowerShell 5.1 o PowerShell 7.
-- Una instalación funcional de Codex que ejecute `codex.exe`.
-- Internet únicamente para buscar o descargar actualizaciones.
+Requiere Windows 10 versión 1703 o posterior, o Windows 11, de 64 bits. Los estados necesitan `codex.exe` y sus registros locales de sesión.
 
-## Instalación
+Ejecuta `CodexPet-Setup.exe`, o extrae todo `CodexPet-Portable.zip` y abre `CodexPet/CodexPet.exe`, conservando la carpeta `assets` junto al ejecutable. Se mantienen las preferencias de `%APPDATA%\CodexPet`.
 
-1. Abre la sección [Releases](https://github.com/ezenwa/CodexPet/releases/latest).
-2. Descarga `CodexPet-Setup.exe`.
-3. Ejecuta el instalador.
+- Arrastra la tarjeta para moverla y las esquinas para cambiar su tamaño.
+- El clic derecho abre las opciones de mascota, idioma, bandeja, inicio, actualizaciones y cierre.
+- El doble clic abre Windows Terminal con Codex.
+- Cerrar la mascota termina también el observador.
 
-CodexPet se instala en `%LOCALAPPDATA%\CodexPet`, crea accesos directos en el Escritorio y el menú Inicio, y registra su observador en el inicio de Windows.
+| Comando | Función |
+| --- | --- |
+| `CodexPet.exe` | Muestra la mascota, incluso cuando Codex está desconectado. |
+| `CodexPet.exe --watch` | La muestra mientras Codex está activo y permanece en segundo plano al salir. |
+| `CodexPet.exe --stop` | Solicita el cierre normal de la instancia nativa. |
 
-## Uso
+La minimización manual se mantiene hasta que restaures la mascota. El menú del icono también permite **Cerrar mascota**. Windows puede colocar el icono dentro del menú de iconos ocultos de la bandeja.
 
-- Arrastra la tarjeta con el botón izquierdo para moverla.
-- Cambia su tamaño desde las esquinas.
-- Haz doble clic para abrir Windows Terminal con Codex.
-- Haz clic derecho para elegir mascota, activar el inicio con Windows, buscar actualizaciones o cerrar CodexPet.
+## Privacidad
 
-### Estados
+Los registros JSONL y los metadatos de aprobación se leen localmente desde `$CODEX_HOME`, por defecto `%USERPROFILE%\.codex`; SQLite se consulta en modo de solo lectura. Los datos permanecen en el equipo. Solo la búsqueda de actualizaciones solicitada por el usuario contacta con GitHub y nunca instala descargas automáticamente. Los formatos internos de Codex pueden cambiar; consulta la [arquitectura y sus limitaciones](docs/ARCHITECTURE.md).
 
-| Estado | Color | Significado |
-| --- | --- | --- |
-| En espera | Morado | Codex está abierto y espera una solicitud. |
-| Trabajando | Azul | Hay una tarea activa. |
-| Necesita atención | Amarillo | Codex solicita aprobación o información. |
-| Tarea terminada | Verde | La tarea finalizó correctamente. |
-| Bloqueado | Rojo | La tarea falló o fue abortada. |
-| Desconectado | Gris | No se detecta un proceso activo de Codex. |
+## Desarrollo y ubicación de archivos nuevos
 
-## Actualizaciones
+Se aplican convenciones habituales de proyectos Cargo. Consulta la [guía de desarrollo y empaquetado](docs/DEVELOPMENT.md) y la [arquitectura](docs/ARCHITECTURE.md).
 
-Abre el menú contextual y selecciona **Buscar actualizaciones**. CodexPet consulta exclusivamente la última versión pública de `ezenwa/CodexPet` mediante la API de GitHub. Si encuentra una versión superior, ofrece abrir la página oficial del release; nunca instala ni ejecuta una descarga automáticamente.
+| Tipo de archivo nuevo | Ubicación |
+| --- | --- |
+| Lógica de la aplicación en Rust | `src/`, agrupada por responsabilidad. |
+| Integración con Windows | El módulo correspondiente de `src/platform/`. |
+| Pruebas unitarias | Junto al módulo en `#[cfg(test)]`; crear `tests/` cuando existan pruebas de integración reales. |
+| Cuadros utilizados por la mascota | `assets/pets/<mascota>/frame_000.png` hasta `frame_071.png`. |
+| Documentación técnica o capturas | `docs/` o `docs/images/`. |
+| Scripts de compilación, preparación y verificación | `tools/`. |
+| Definiciones y auxiliares del instalador | `installer/`. |
 
-## Privacidad y seguridad
+`Cargo.toml` determina la versión y `Cargo.lock` conserva la resolución de dependencias. `.build/`, `target/` y `dist/` contienen herramientas locales o resultados generados y están excluidos de Git. Los secretos y ajustes particulares del equipo no deben incorporarse al repositorio.
 
-CodexPet procesa localmente los registros de sesión ubicados en `%USERPROFILE%\.codex\sessions` para identificar tipos de evento. No envía prompts, respuestas ni contenido de archivos. La comprobación de actualizaciones solo comunica a GitHub una solicitud HTTPS estándar.
-
-## Atribución
-
-Las mascotas distribuidas con CodexPet son recursos visuales oficiales de Codex. Sus diseños, nombres y archivos originales pertenecen a OpenAI/Codex y a sus respectivos titulares. Este repositorio únicamente los presenta mediante una interfaz de escritorio alternativa; no está afiliado, patrocinado ni respaldado oficialmente por OpenAI.
-
-## Desarrollo
-
-El proyecto está implementado en PowerShell y WPF, sin dependencias externas de ejecución.
-
-```powershell
-powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\CodexPet.ps1
-```
-
-Para validar la sintaxis:
-
-```powershell
-$tokens = $null
-$errors = $null
-[System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path '.\CodexPet.ps1'), [ref]$tokens, [ref]$errors) | Out-Null
-$errors
-```
-
-Para generar `dist\CodexPet-Setup.exe` y `dist\CodexPet-Setup.zip` necesitas [Inno Setup 6](https://jrsoftware.org/isinfo.php):
-
-```powershell
-.\Build-Release.ps1 -Version 1.2.3
-```
-
-## Arquitectura
-
-- `CodexPet.ps1`: ventana WPF, animaciones, idiomas y actualizaciones.
-- `CodexPet-State.ps1`: lector incremental y mapeo de eventos reales de Codex a estados visuales.
-- `CodexPet-Watcher.ps1`: detecta el grupo de procesos de Codex y mantiene una sola mascota.
-- `installer/CodexPet.iss`: instalación y desinstalación nativas mediante Inno Setup.
-- `Stop-CodexPet.ps1`: cierre controlado antes de actualizar o desinstalar.
-- `assets/pets`: cuadros de animación de las mascotas.
-
-## Solución de problemas
-
-- Si la mascota no aparece, confirma que `codex.exe` esté en ejecución.
-- Si una actualización no puede comprobarse, revisa la conexión a GitHub y vuelve a intentarlo desde el menú contextual.
-- El registro del observador está en `%LOCALAPPDATA%\CodexPet\watcher.log`.
-- Para reinstalar, ejecuta el instalador más reciente; la posición y la mascota elegida se conservan.
-
-## Versiones
-
-Consulta [CHANGELOG.es.md](CHANGELOG.es.md) para conocer los cambios publicados o [CHANGELOG.md](CHANGELOG.md) para la versión en inglés.
+Consulta [CHANGELOG.es.md](CHANGELOG.es.md) para conocer los cambios.

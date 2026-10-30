@@ -2,6 +2,26 @@
 
 [Historial en español](CHANGELOG.es.md)
 
+## 2.1.0 - 2026-10-30
+
+- Added **Minimize to tray**, with a pet icon, localized status, restore and close actions.
+- Kept manually minimized pets hidden while Codex activity changes, and restored the tray icon after Explorer restarts.
+- Split native Windows integration into application, graphics, process, startup, update and tray modules.
+- Grouped reusable scripts under `tools/` and installer helpers under `installer/`; updated all packaging paths.
+- Flattened each pet's 72 PNG frames and removed unused Sixel exports, obsolete launchers, one-off installation scripts, backups and temporary build files.
+- Added development and architecture documentation, file-placement guidance and consistent text settings.
+- Verification removes its temporary files, and the version is defined only in Cargo.toml.
+
+## 2.0.0 - 2026-10-29
+
+- Replaced the PowerShell/WPF application with a native Rust/Win32 executable.
+- Integrated session monitoring into the application; closing it stops the observer.
+- Preserved all eight pets, animation timings and existing user preferences.
+- Correlated pending questions and approval decisions by tool call ID and aggregated active sessions.
+- Moved log reading and update checks off the UI thread.
+- Added portable packaging, native window smoke checks and Rust regression tests.
+- Used Cargo.toml as the source of the application and installer version.
+
 ## 1.2.3 - 2026-08-12
 
 - Added a localized **About** menu entry.
