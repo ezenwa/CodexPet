@@ -13,6 +13,7 @@ A native Windows desktop pet written in Rust. It follows local Codex activity in
 - Eight pets and six states: idle, working, needs attention, complete, failed and offline.
 - English and Spanish, saved pet selection, size and position.
 - Native Win32 graphics and background monitoring in a single process.
+- A mascot application icon embedded in the executable and installer, with sizes for Windows display scaling.
 - **Minimize to tray** from the context menu; click the tray icon or choose **Show pet** to restore it. Monitoring continues while hidden.
 - Multiple-session state aggregation and tool-call correlation for questions and approvals.
 - Per-user installation, Windows startup and manual update checks.
@@ -50,6 +51,7 @@ This repository follows common Cargo project conventions. See [development and p
 | Windows-specific code | `src/platform/`, inside the relevant module. |
 | Unit tests | Beside the module in `#[cfg(test)]`; add `tests/` only when actual integration tests are needed. |
 | Runtime pet frames | `assets/pets/<pet>/frame_000.png` through `frame_071.png`. |
+| Embedded application icon | `assets/icons/codexpet.ico`; `build.rs` embeds it during compilation. |
 | Technical documentation or screenshots | `docs/` or `docs/images/`. |
 | Build, setup and verification scripts | `tools/`. |
 | Installer definitions and upgrade helpers | `installer/`. |

@@ -33,6 +33,18 @@ $pe = [BitConverter]::ToInt32($exeBytes,0x3c)
 if ([BitConverter]::ToUInt16($exeBytes,$pe + 24 + 68) -ne 2) { throw 'Executable must use the Windows GUI subsystem.' }
 $setup = Get-Item -LiteralPath (Join-Path $dist 'CodexPet-Setup.exe')
 $version = [regex]::Match((Get-Content -LiteralPath (Join-Path $root 'Cargo.toml') -Raw), '(?m)^version\s*=\s*"([^"]+)"').Groups[1].Value
+if ((Get-Item -LiteralPath (Join-Path $portable 'CodexPet.exe')).VersionInfo.ProductVersion.Trim() -ne $version) { throw 'Executable version resource mismatch.' }
+if (-not ('CodexPetPackageIcon' -as [type])) {
+    Add-Type -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+public static class CodexPetPackageIcon {
+    [DllImport("shell32.dll", CharSet=CharSet.Unicode)]
+    public static extern uint ExtractIconExW(string file, int index, IntPtr large, IntPtr small, uint count);
+}
+'@
+}
+if ([CodexPetPackageIcon]::ExtractIconExW((Join-Path $portable 'CodexPet.exe'),-1,[IntPtr]::Zero,[IntPtr]::Zero,0) -ne 1) { throw 'The executable must have one embedded application icon.' }
 if ($setup.VersionInfo.ProductVersion.Trim() -ne $version) { throw 'Installer version mismatch.' }
 "Package verified: $verified files, $frameCount frames, GUI executable, installer v$version."
 # An extracted path with spaces catches packaging and executable argument regressions.

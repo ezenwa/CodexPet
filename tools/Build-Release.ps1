@@ -19,7 +19,9 @@ if (Test-Path -LiteralPath $portable) {
 }
 New-Item -ItemType Directory -Path $portable -Force | Out-Null
 Copy-Item -LiteralPath (Join-Path $root 'target\release\CodexPet.exe') -Destination $portable -Force
-Copy-Item -LiteralPath (Join-Path $root 'assets') -Destination $portable -Recurse -Force
+$runtimeAssets = Join-Path $portable 'assets'
+New-Item -ItemType Directory -Path $runtimeAssets -Force | Out-Null
+Copy-Item -LiteralPath (Join-Path $root 'assets\pets') -Destination $runtimeAssets -Recurse -Force
 Copy-Item -LiteralPath (Join-Path $root 'docs') -Destination $portable -Recurse -Force
 foreach ($file in @('README.md','README.es.md','CHANGELOG.md','CHANGELOG.es.md')) {
     Copy-Item -LiteralPath (Join-Path $root $file) -Destination $portable -Force

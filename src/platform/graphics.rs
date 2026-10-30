@@ -168,6 +168,33 @@ pub(super) fn draw_label(canvas: &mut RgbaImage, text: &str) -> io::Result<()> {
     }
 }
 
+/// Class icons are shared resource handles and must not be destroyed by the caller.
+pub(super) fn application_icon(instance: HINSTANCE, small: bool) -> io::Result<HICON> {
+    unsafe {
+        let dpi = windows_sys::Win32::UI::HiDpi::GetDpiForSystem().max(96);
+        let (x, y) = if small {
+            (SM_CXSMICON, SM_CYSMICON)
+        } else {
+            (SM_CXICON, SM_CYICON)
+        };
+        let width = windows_sys::Win32::UI::HiDpi::GetSystemMetricsForDpi(x, dpi);
+        let height = windows_sys::Win32::UI::HiDpi::GetSystemMetricsForDpi(y, dpi);
+        let icon = LoadImageW(
+            instance,
+            101usize as *const u16,
+            IMAGE_ICON,
+            width,
+            height,
+            LR_SHARED,
+        ) as HICON;
+        if icon.is_null() {
+            Err(native_error())
+        } else {
+            Ok(icon)
+        }
+    }
+}
+
 /// Returns an owned icon; the notification-area owner releases it with DestroyIcon.
 pub(super) fn icon_from_image(image: &RgbaImage) -> io::Result<HICON> {
     unsafe {

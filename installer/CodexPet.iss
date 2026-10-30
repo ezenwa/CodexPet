@@ -1,5 +1,5 @@
 #ifndef MyAppVersion
-  #define MyAppVersion "2.1.0"
+  #define MyAppVersion "2.1.1"
 #endif
 
 [Setup]
@@ -22,11 +22,13 @@ OutputBaseFilename=CodexPet-Setup
 Compression=lzma2/ultra64
 SolidCompression=yes
 WizardStyle=modern
+SetupIconFile=..\assets\icons\codexpet.ico
 SetupLogging=yes
 CloseApplications=yes
 CloseApplicationsFilter=CodexPet.exe
 RestartApplications=no
 UninstallDisplayName=CodexPet
+UninstallDisplayIcon={app}\CodexPet.exe,0
 VersionInfoVersion={#MyAppVersion}
 VersionInfoDescription=CodexPet Setup
 VersionInfoProductName=CodexPet
@@ -43,8 +45,8 @@ Source: "language.en.txt"; DestDir: "{userappdata}\CodexPet"; DestName: "languag
 Source: "language.es.txt"; DestDir: "{userappdata}\CodexPet"; DestName: "language.txt"; Languages: spanish; Flags: onlyifdoesntexist
 
 [Icons]
-Name: "{autodesktop}\CodexPet"; Filename: "{app}\CodexPet.exe"; WorkingDir: "{app}"
-Name: "{group}\CodexPet"; Filename: "{app}\CodexPet.exe"; WorkingDir: "{app}"
+Name: "{autodesktop}\CodexPet"; Filename: "{app}\CodexPet.exe"; WorkingDir: "{app}"; IconFilename: "{app}\CodexPet.exe"; IconIndex: 0
+Name: "{group}\CodexPet"; Filename: "{app}\CodexPet.exe"; WorkingDir: "{app}"; IconFilename: "{app}\CodexPet.exe"; IconIndex: 0
 Name: "{group}\{cm:UninstallProgram,CodexPet}"; Filename: "{uninstallexe}"
 
 [Registry]

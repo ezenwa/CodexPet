@@ -2,6 +2,13 @@
 
 [Historial en español](CHANGELOG.es.md)
 
+## 2.1.1 - 2026-10-30
+
+- Added a transparent mascot application icon with ten sizes from 16 to 256 pixels.
+- Embedded the icon and Cargo-derived version metadata in the Windows executable.
+- Applied the icon to native windows, desktop/Start menu shortcuts, installer and uninstall entry.
+- Added package checks for embedded icon and executable version resources.
+
 ## 2.1.0 - 2026-10-30
 
 - Added **Minimize to tray**, with a pet icon, localized status, restore and close actions.

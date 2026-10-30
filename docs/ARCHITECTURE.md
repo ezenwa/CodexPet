@@ -31,6 +31,8 @@ Codex's JSONL and SQLite logs are internal integration points. Malformed and unk
 
 ## Data and packaging
 
+The application icon is a stable mascot bust in `assets/icons/codexpet.ico`. `build.rs` embeds it as Windows resource 101, together with Cargo-derived version metadata. Window classes load both small and large icons from that resource. The installer and shortcuts use this application identity; the tray retains its selected-pet icon.
+
 Settings are stored in `%APPDATA%\CodexPet`, preserving the earlier position JSON and pet/language text formats. Runtime errors use a rotating local log there. The app reads `$CODEX_HOME`, defaulting to `%USERPROFILE%\.codex`. Only a manual update check contacts GitHub.
 
 Source assets use `assets/pets/<pet>/frame_000.png` through `frame_071.png`. The executable uses adjacent assets in portable or installed packages. Development builds can find the source assets. Packaging uses a static MSVC CRT and retains the installer identity for upgrades. The installer helper remains necessary for stopping PowerShell-era installations; normal operation does not use it.

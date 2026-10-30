@@ -13,6 +13,7 @@ Una mascota de escritorio para Windows escrita en Rust. Representa la actividad 
 - Ocho mascotas y seis estados: espera, trabajo, atención, finalización, fallo y desconexión.
 - Español e inglés; mascota, tamaño y posición persistentes.
 - Ventana Win32 y observador en segundo plano dentro de un único proceso.
+- Icono de la mascota incrustado en el ejecutable y el instalador, con tamaños para el escalado de Windows.
 - **Minimizar a la bandeja** desde el menú contextual. Para volver, pulsa el icono o selecciona **Mostrar mascota**. La supervisión continúa mientras está oculta.
 - Varias sesiones participan en el estado; las preguntas y aprobaciones se relacionan por llamada.
 - Instalación por usuario, inicio con Windows y búsqueda manual de actualizaciones.
@@ -50,6 +51,7 @@ Se aplican convenciones habituales de proyectos Cargo. Consulta la [guía de des
 | Integración con Windows | El módulo correspondiente de `src/platform/`. |
 | Pruebas unitarias | Junto al módulo en `#[cfg(test)]`; crear `tests/` cuando existan pruebas de integración reales. |
 | Cuadros utilizados por la mascota | `assets/pets/<mascota>/frame_000.png` hasta `frame_071.png`. |
+| Icono incrustado de la aplicación | `assets/icons/codexpet.ico`; `build.rs` lo incorpora al compilar. |
 | Documentación técnica o capturas | `docs/` o `docs/images/`. |
 | Scripts de compilación, preparación y verificación | `tools/`. |
 | Definiciones y auxiliares del instalador | `installer/`. |

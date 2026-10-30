@@ -2,6 +2,13 @@
 
 [Changelog in English](CHANGELOG.md)
 
+## 2.1.1 - 2026-10-30
+
+- Se agregó un icono transparente de la mascota en diez tamaños, de 16 a 256 píxeles.
+- El ejecutable de Windows incorpora el icono y la versión definida por Cargo.
+- Se aplicó a las ventanas nativas, los accesos del Escritorio/Inicio, el instalador y la entrada de desinstalación.
+- Se verifica que el paquete incluya el icono incrustado y los recursos de versión.
+
 ## 2.1.0 - 2026-10-30
 
 - Se agregó **Minimizar a la bandeja**, con icono de la mascota, estado localizado y opciones para mostrar o cerrar.

@@ -37,6 +37,8 @@ This exercises hidden rendering, all eight pets, languages, resizing, tray regis
 
 ## Package
 
+`build.rs` compiles the Windows icon and version resources through the build-only `embed-resource` dependency. It reads `assets/icons/codexpet.ico` and derives executable metadata from Cargo's version. A missing icon fails the Windows build. The ICO contains ten RGBA sizes from 16 to 256 pixels. Keep the icon source here; it is embedded, so a separate copy is not shipped in runtime assets.
+
 The source of the version is `Cargo.toml`. Update it and both changelogs for a release. `Cargo.lock` should remain checked in. `VERSION` is generated inside the portable payload, not maintained as a second source file.
 
 ```powershell

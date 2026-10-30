@@ -1,5 +1,5 @@
 use super::{
-    graphics::{Surface, draw_label},
+    graphics::{Surface, application_icon, draw_label},
     log_error, native_error, open_url,
     processes::single_instance,
     show_error,
@@ -730,6 +730,8 @@ pub fn run() -> Result<(), Box<dyn Error>> {
             lpfnWndProc: Some(wndproc),
             hInstance: instance,
             hCursor: LoadCursorW(null_mut(), IDC_ARROW),
+            hIcon: application_icon(instance, false)?,
+            hIconSm: application_icon(instance, true)?,
             lpszClassName: class.as_ptr(),
             ..zeroed()
         };
@@ -868,7 +870,7 @@ pub fn run() -> Result<(), Box<dyn Error>> {
             fs::create_dir_all(path.parent().unwrap())?;
             fs::write(
                 path,
-                b"Native window, eight pets, languages, six states, resize, tray minimize/restore/recreate and close passed.\n",
+                b"Embedded application icons, native window, eight pets, languages, six states, resize, tray minimize/restore/recreate and close passed.\n",
             )?;
         }
     }
