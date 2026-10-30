@@ -2,6 +2,14 @@
 
 [Historial en español](CHANGELOG.es.md)
 
+## 2.2.0 - 2026-10-30
+
+- Replaced Inno Setup with native Rust installation, migration and self-removal.
+- Embedded all pet frames so the portable application is a standalone executable.
+- Replaced PowerShell build scripts with Cargo xtask checks, packaging and isolated installation tests.
+- Preserved per-user preferences, startup choices, application icon and existing uninstall registration during upgrades.
+- Removed obsolete installer definitions, helpers and installed resource copies.
+
 ## 2.1.1 - 2026-10-30
 
 - Added a transparent mascot application icon with ten sizes from 16 to 256 pixels.

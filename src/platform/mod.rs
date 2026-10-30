@@ -2,6 +2,7 @@
 //! Native Windows integration. Raw handles are kept inside this module tree.
 mod app;
 mod graphics;
+mod install;
 mod processes;
 mod startup;
 mod tray;

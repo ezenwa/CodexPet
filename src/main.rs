@@ -3,7 +3,9 @@
 fn main() {
     #[cfg(windows)]
     if let Err(error) = codexpet::platform::run() {
-        if std::env::args().any(|arg| arg == "--preview" || arg == "--smoke-test") {
+        if std::env::args()
+            .any(|arg| matches!(arg.as_str(), "--preview" | "--smoke-test" | "--quiet"))
+        {
             eprintln!("CodexPet: {error}");
         } else {
             codexpet::platform::show_error(&error.to_string());

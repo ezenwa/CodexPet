@@ -2,6 +2,14 @@
 
 [Changelog in English](CHANGELOG.md)
 
+## 2.2.0 - 2026-10-30
+
+- Se sustituyó Inno Setup por instalación, migración y desinstalación implementadas en Rust.
+- Se incorporaron todos los cuadros de las mascotas al ejecutable portable autónomo.
+- Se reemplazaron los scripts PowerShell por Cargo xtask para comprobar, empaquetar y probar instalaciones aisladas.
+- Se conservan las preferencias, la elección de inicio con Windows, el icono y el registro de desinstalación al actualizar.
+- Se retiraron las definiciones del instalador, auxiliares y copias de recursos instaladas que ya no se utilizan.
+
 ## 2.1.1 - 2026-10-30
 
 - Se agregó un icono transparente de la mascota en diez tamaños, de 16 a 256 píxeles.

@@ -22,7 +22,7 @@ Una mascota de escritorio para Windows escrita en Rust. Representa la actividad 
 
 Requiere Windows 10 versión 1703 o posterior, o Windows 11, de 64 bits. Los estados necesitan `codex.exe` y sus registros locales de sesión.
 
-Ejecuta `CodexPet-Setup.exe`, o extrae todo `CodexPet-Portable.zip` y abre `CodexPet/CodexPet.exe`, conservando la carpeta `assets` junto al ejecutable. Se mantienen las preferencias de `%APPDATA%\CodexPet`.
+Ejecuta `CodexPet-Setup.exe` para instalar por usuario, o abre `CodexPet.exe` desde el ZIP portable. Las mascotas y los iconos están incorporados: el ejecutable funciona por sí solo. Rust gestiona la instalación, las actualizaciones, los accesos directos y la desinstalación. Se mantienen las preferencias de `%APPDATA%\CodexPet`.
 
 - Arrastra la tarjeta para moverla y las esquinas para cambiar su tamaño.
 - El clic derecho abre las opciones de mascota, idioma, bandeja, inicio, actualizaciones y cierre.
@@ -34,6 +34,8 @@ Ejecuta `CodexPet-Setup.exe`, o extrae todo `CodexPet-Portable.zip` y abre `Code
 | `CodexPet.exe` | Muestra la mascota, incluso cuando Codex está desconectado. |
 | `CodexPet.exe --watch` | La muestra mientras Codex está activo y permanece en segundo plano al salir. |
 | `CodexPet.exe --stop` | Solicita el cierre normal de la instancia nativa. |
+| `CodexPet.exe --install` | Instala o actualiza en `%LOCALAPPDATA%\CodexPet`. |
+| `CodexPet.exe --uninstall` | Desinstala la aplicación y conserva las preferencias. |
 
 La minimización manual se mantiene hasta que restaures la mascota. El menú del icono también permite **Cerrar mascota**. Windows puede colocar el icono dentro del menú de iconos ocultos de la bandeja.
 
@@ -43,7 +45,7 @@ Los registros JSONL y los metadatos de aprobación se leen localmente desde `$CO
 
 ## Desarrollo y ubicación de archivos nuevos
 
-Se aplican convenciones habituales de proyectos Cargo. Consulta la [guía de desarrollo y empaquetado](docs/DEVELOPMENT.md) y la [arquitectura](docs/ARCHITECTURE.md).
+Compila y verifica con `cargo xtask release`; comprueba el código con `cargo xtask check`. Para compilar se necesitan Rust MSVC, C++ Build Tools y Windows SDK. Se aplican convenciones habituales de proyectos Cargo. Consulta la [guía de desarrollo y empaquetado](docs/DEVELOPMENT.md) y la [arquitectura](docs/ARCHITECTURE.md).
 
 | Tipo de archivo nuevo | Ubicación |
 | --- | --- |
@@ -53,8 +55,8 @@ Se aplican convenciones habituales de proyectos Cargo. Consulta la [guía de des
 | Cuadros utilizados por la mascota | `assets/pets/<mascota>/frame_000.png` hasta `frame_071.png`. |
 | Icono incrustado de la aplicación | `assets/icons/codexpet.ico`; `build.rs` lo incorpora al compilar. |
 | Documentación técnica o capturas | `docs/` o `docs/images/`. |
-| Scripts de compilación, preparación y verificación | `tools/`. |
-| Definiciones y auxiliares del instalador | `installer/`. |
+| Compilación, empaquetado y verificaciones de Cargo | `xtask/src/`. |
+| Instalación y desinstalación | `src/platform/install.rs`. |
 
 `Cargo.toml` determina la versión y `Cargo.lock` conserva la resolución de dependencias. `.build/`, `target/` y `dist/` contienen herramientas locales o resultados generados y están excluidos de Git. Los secretos y ajustes particulares del equipo no deben incorporarse al repositorio.
 

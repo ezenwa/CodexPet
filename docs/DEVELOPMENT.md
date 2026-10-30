@@ -1,65 +1,52 @@
 # Development
 
-CodexPet is a Cargo application for Windows x64. Its UI uses Win32 directly through `windows-sys`; there is no web frontend or WPF runtime.
+CodexPet is a Cargo workspace for Windows x64. The application, installation and packaging tools are written in Rust. The UI uses native Win32 APIs; there is no web frontend or external installer technology.
 
-## Tools
+## Prerequisites
 
-Use the current stable Rust MSVC toolchain with rustfmt and Clippy, plus Visual Studio C++ Build Tools and a Windows SDK. For a project-local toolchain, run:
+Use stable Rust MSVC with rustfmt and Clippy, Visual Studio C++ Build Tools and a Windows SDK. The linker and SDK resource compiler are normal Windows native build requirements. End users only need Windows 10 version 1703 or later, or Windows 11, x64.
 
-```powershell
-powershell -NoProfile -File tools/Setup-Rust.ps1
-```
-
-The local installation stays in `.build/cargo` and `.build/rustup`. `tools/Cargo.ps1` selects it when available and otherwise uses Cargo from PATH. It does not change the global PATH.
+If Rust is installed locally under `.build/`, select `.build/cargo` as `CARGO_HOME`, `.build/rustup` as `RUSTUP_HOME` and add `.build/cargo/bin` to the current process PATH. These directories are ignored and contain the development toolchain, not application resources.
 
 ## Build and check
 
-With a system Rust installation:
-
-```powershell
-cargo fmt -- --check
-cargo clippy --all-targets --locked -- -D warnings
-cargo test --locked
+```text
+cargo xtask check
 cargo build --release --locked
+cargo xtask release
+cargo xtask verify
 ```
 
-For local tools, replace `cargo` with `powershell -NoProfile -File tools/Cargo.ps1`, preserving the remaining arguments. Download dependencies with `tools/Cargo.ps1 fetch` when necessary. The executable is `target/release/CodexPet.exe`.
+`check` runs rustfmt, Clippy with warnings denied and all workspace tests. Unit tests live beside their modules and cover state correlation, session priority, incremental reads, animation bounds, existing settings and embedded pet assets. Create `tests/` only when there are integration tests to place there.
 
-Unit tests live beside their modules and include state correlation, multi-session priority, incremental reading, animation bounds, legacy settings and all runtime pet assets. Add Cargo's conventional `tests/` directory only for real integration tests; do not keep empty placeholder folders.
+`release` runs those checks, builds the release application, refreshes `dist/`, packages it and verifies the result. `verify` checks the current distribution without rebuilding. Verification requires an interactive Windows desktop with Explorer running. It renders a hidden window, exercises every pet and state, language changes, resizing, tray activation and recreation. A test tray icon can appear briefly. It also installs, upgrades and uninstalls into an isolated temporary directory and registry namespace, checking startup choice preservation and legacy resource removal. Temporary files and test registration are cleaned afterward; actual user settings and installation are not touched.
 
-On a Windows desktop with Explorer running, verify the actual window and notification-area integration:
+## Packaging and installation
 
-```powershell
-powershell -NoProfile -File tools/Verify-Native.ps1
-```
+`Cargo.toml` is the version source; update it and both changelogs for a release. Commit `Cargo.lock`. `build.rs` embeds the 576 PNG frames and compiles the Windows icon and version resources through the build-only `embed-resource` crate. The icon source contains ten RGBA sizes from 16 to 256 pixels. The application uses a static MSVC CRT.
 
-This exercises hidden rendering, all eight pets, languages, resizing, tray registration, activation, recreation and shutdown. A test tray icon may appear briefly. User preferences are not changed. Temporary previews and markers are deleted when verification finishes.
+Generated outputs:
 
-## Package
+- `dist/CodexPet.exe`: standalone portable application.
+- `dist/CodexPet-Setup.exe`: the same binary; its filename selects installation mode.
+- `dist/CodexPet-Portable.zip`: the standalone application with bilingual usage documentation.
+- `dist/SHA256SUMS`: checksums of the three downloadable artifacts.
 
-`build.rs` compiles the Windows icon and version resources through the build-only `embed-resource` dependency. It reads `assets/icons/codexpet.ico` and derives executable metadata from Cargo's version. A missing icon fails the Windows build. The ICO contains ten RGBA sizes from 16 to 256 pixels. Keep the icon source here; it is embedded, so a separate copy is not shipped in runtime assets.
+`CodexPet.exe --install` installs or upgrades under `%LOCALAPPDATA%\CodexPet`, creates desktop and Start menu shortcuts, and registers removal with Windows Settings. `--no-launch` suppresses launching after installation. The default installation starts in `--watch` mode. Existing startup choices and `%APPDATA%\CodexPet` preferences survive upgrades. `--quiet` suppresses error dialogs for unattended operations; errors still produce a nonzero exit status.
 
-The source of the version is `Cargo.toml`. Update it and both changelogs for a release. `Cargo.lock` should remain checked in. `VERSION` is generated inside the portable payload, not maintained as a second source file.
+`CodexPet.exe --uninstall` removes its own registration, shortcuts and executable while preserving preferences and unknown files. The retained uninstall registry identifier provides continuity with previous installations; the old installer executable is never run. Migration removes the documented old installer files and its `assets/` and `docs/` resource trees. Reparse points are rejected before traversing those trees. `self-replace` handles removal of the running executable using temporary native cleanup helpers. No PowerShell scripts or third-party installer are needed.
 
-```powershell
-powershell -NoProfile -File tools/Build-Release.ps1
-# Without Inno Setup:
-powershell -NoProfile -File tools/Build-Release.ps1 -PortableOnly
-# Verify installer metadata and the extracted portable package:
-powershell -NoProfile -File tools/Verify-Package.ps1
-```
+The internal `--test-root` option is limited to direct children of the OS temporary directory with the `CodexPet-install-check-` prefix. It changes all install, shortcut and registry destinations and skips stopping the user's running pet. Use it only through `cargo xtask verify`.
 
-Inno Setup 6 is required for the installer. `dist/CodexPet/` is the runnable portable folder, `dist/CodexPet-Portable.zip` is its archive and `dist/CodexPet-Setup.exe` is the installer. Rebuilding refreshes the portable folder to avoid shipping removed resources. Package verification extracts into a temporary path containing spaces and removes it afterward.
+Publishing commits and creating a GitHub release are separate operations; packaging never uploads files or changes the remote repository.
 
-Publishing the repository or creating a GitHub release is a separate operation. Local packaging does not push commits or upload artifacts.
+## File placement
 
-## Repository boundaries
+- `src/`: application logic; `src/platform/` contains Windows integration and installation.
+- `xtask/src/`: Rust build, package and verification code.
+- `assets/pets/<pet>/`: 72 PNG frames per pet, embedded at compilation. Preserve names, order and attribution.
+- `assets/icons/`: the source application icon.
+- `docs/`: technical documentation and `docs/images/` screenshots; user usage stays in the root READMEs.
+- `.build/`, `target/`, `dist/`: ignored local tools and generated outputs.
 
-- `src/`: application and native platform code; see [architecture](ARCHITECTURE.md).
-- `assets/pets/<pet>/`: only the 72 PNG frames consumed by the application. Preserve names, ordering and attribution.
-- `installer/`: Inno Setup, language defaults and the helper needed to stop existing installations before upgrading.
-- `tools/`: reusable build and validation scripts. One-off workstation scripts do not belong here.
-- `docs/`: technical documentation; user installation and usage stay in the root READMEs.
-- `.build/`, `target/`, `dist/`: ignored local tools and generated outputs. Do not move installed dependencies during source reorganization.
-
-Use rustfmt for Rust. EditorConfig and Git attributes define text encoding and line endings. Keep secrets and personal configuration outside the repository. The project does not keep source backups or obsolete release trees.
+Use rustfmt, EditorConfig and Git attributes for formatting and text encoding. Keep secrets and workstation configuration outside source control. The project retains no source backups or obsolete release trees.

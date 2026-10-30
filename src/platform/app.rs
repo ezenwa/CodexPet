@@ -54,7 +54,6 @@ const RESTORE: usize = 208;
 
 struct App {
     settings: Settings,
-    assets: PathBuf,
     images: PetImages,
     state: PetState,
     clock: Instant,
@@ -307,7 +306,7 @@ impl App {
         match command {
             PET_MENU..=107 => {
                 let key = PETS[command - PET_MENU].0;
-                match PetImages::load(&self.assets, key) {
+                match PetImages::load(key) {
                     Ok(images) => {
                         self.images = images;
                         self.settings.pet = key.into();
@@ -631,6 +630,9 @@ unsafe extern "system" fn wndproc(
 
 pub fn run() -> Result<(), Box<dyn Error>> {
     let args: Vec<String> = std::env::args().skip(1).collect();
+    if super::install::dispatch(&args)? {
+        return Ok(());
+    }
     if args.iter().any(|a| a == "--stop") {
         unsafe {
             let hwnd = FindWindowW(wide(CLASS).as_ptr(), null());
@@ -640,14 +642,13 @@ pub fn run() -> Result<(), Box<dyn Error>> {
         }
         return Ok(());
     }
-    let assets = config::asset_root()?;
     if let Some(index) = args.iter().position(|a| a == "--preview") {
         let dir = PathBuf::from(
             args.get(index + 1)
                 .ok_or("--preview requires an output directory")?,
         );
         fs::create_dir_all(&dir)?;
-        let images = PetImages::load(&assets, "codex")?;
+        let images = PetImages::load("codex")?;
         for state in PetState::ALL {
             let frame = animation::frame(state, 0);
             let mut canvas = render::paint(336, 280, &images.frames[frame], state, 0.);
@@ -683,7 +684,7 @@ pub fn run() -> Result<(), Box<dyn Error>> {
         }
     };
     let settings = Settings::load(state_dir, default_language);
-    let images = PetImages::load(&assets, &settings.pet)?;
+    let images = PetImages::load(&settings.pet)?;
     let watch = args.iter().any(|a| a == "--watch");
     let (tx, rx) = mpsc::channel();
     let simulation = if smoke { Some(tx.clone()) } else { None };
@@ -700,7 +701,6 @@ pub fn run() -> Result<(), Box<dyn Error>> {
     };
     let app = Box::new(RefCell::new(App {
         settings,
-        assets: assets.clone(),
         images,
         state: PetState::Idle,
         clock: Instant::now(),

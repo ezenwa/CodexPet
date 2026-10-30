@@ -1,8 +1,5 @@
 use serde::{Deserialize, Serialize};
-use std::{
-    fs, io,
-    path::{Path, PathBuf},
-};
+use std::{fs, io, path::PathBuf};
 
 pub const PETS: [(&str, &str); 8] = [
     ("codex", "Codex"),
@@ -135,22 +132,6 @@ impl Settings {
         fs::write(&temp, bytes)?;
         fs::rename(temp, target)
     }
-}
-
-pub fn asset_root() -> io::Result<PathBuf> {
-    let exe = std::env::current_exe()?;
-    // An installed or portable executable always uses its adjacent assets first.
-    let mut candidates = vec![exe.parent().unwrap_or(Path::new(".")).to_path_buf()];
-    candidates.push(PathBuf::from(env!("CARGO_MANIFEST_DIR")));
-    for root in candidates {
-        if root.join("assets/pets").is_dir() {
-            return Ok(root);
-        }
-    }
-    Err(io::Error::new(
-        io::ErrorKind::NotFound,
-        "Missing assets/pets beside CodexPet.exe",
-    ))
 }
 
 #[cfg(test)]

@@ -3,22 +3,17 @@ use image::{
     Rgba, RgbaImage,
     imageops::{FilterType, resize},
 };
-use std::{
-    fs, io,
-    path::{Path, PathBuf},
-};
+use std::io;
 
 pub struct PetImages {
     pub frames: Vec<RgbaImage>,
 }
 impl PetImages {
-    pub fn load(root: &Path, key: &str) -> io::Result<Self> {
+    pub fn load(key: &str) -> io::Result<Self> {
         if !PETS.iter().any(|(k, _)| *k == key) {
             return Err(io::Error::new(io::ErrorKind::InvalidInput, "Unknown pet"));
         }
-        let mut files = Vec::new();
-        collect_frames(&root.join("assets/pets").join(key), &mut files)?;
-        files.sort_by(|a, b| a.file_name().cmp(&b.file_name()));
+        let files: Vec<_> = crate::assets::pet_frames(key).collect();
         if files.len() != 72 {
             return Err(io::Error::new(
                 io::ErrorKind::InvalidData,
@@ -27,8 +22,8 @@ impl PetImages {
         }
         let frames = files
             .into_iter()
-            .map(|p| {
-                image::open(p)
+            .map(|bytes| {
+                image::load_from_memory(bytes)
                     .map(|i| i.into_rgba8())
                     .map_err(io::Error::other)
             })
@@ -44,20 +39,6 @@ impl PetImages {
             ((175. * scale).floor() as i32).max((100. * dpi) as i32),
         )
     }
-}
-fn collect_frames(path: &Path, files: &mut Vec<PathBuf>) -> io::Result<()> {
-    for entry in fs::read_dir(path)? {
-        let entry = entry?;
-        let kind = entry.file_type()?;
-        if kind.is_dir() {
-            collect_frames(&entry.path(), files)?;
-        } else if entry.file_name().to_string_lossy().starts_with("frame_")
-            && entry.path().extension().is_some_and(|e| e == "png")
-        {
-            files.push(entry.path());
-        }
-    }
-    Ok(())
 }
 
 pub struct Layout {
@@ -178,9 +159,8 @@ mod tests {
     use super::*;
     #[test]
     fn all_assets_load_and_render_without_losing_transparency() {
-        let root = Path::new(env!("CARGO_MANIFEST_DIR"));
         for (key, _) in PETS {
-            let pet = PetImages::load(root, key).unwrap();
+            let pet = PetImages::load(key).unwrap();
             assert_eq!(pet.frames.len(), 72);
             let output = paint(168, 140, &pet.frames[0], PetState::Working, 0.);
             assert!(output.get_pixel(0, 0)[3] < 30);

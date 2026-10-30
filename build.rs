@@ -1,12 +1,41 @@
 use std::{env, fs, path::PathBuf};
 
 fn main() {
+    let root = PathBuf::from(env::var_os("CARGO_MANIFEST_DIR").expect("Cargo manifest directory"));
+    let output = PathBuf::from(env::var_os("OUT_DIR").expect("Cargo output directory"));
+    println!("cargo:rerun-if-changed=assets/pets");
+    let mut embedded = String::from("pub static PET_ASSETS: &[(&str, &[u8])] = &[\n");
+    let mut pets: Vec<_> = fs::read_dir(root.join("assets/pets"))
+        .expect("Pet assets")
+        .map(|entry| entry.expect("Pet directory").path())
+        .collect();
+    pets.sort();
+    for pet in pets {
+        assert!(pet.is_dir(), "Unexpected pet asset entry");
+        let key = pet
+            .file_name()
+            .expect("Pet key")
+            .to_str()
+            .expect("UTF-8 pet key");
+        for frame in 0..72 {
+            let name = format!("frame_{frame:03}.png");
+            let path = pet.join(&name);
+            assert!(path.is_file(), "Missing pet frame: {}", path.display());
+            println!("cargo:rerun-if-changed={}", path.display());
+            embedded.push_str(&format!(
+                "({:?}, include_bytes!({:?})),\n",
+                format!("pets/{key}/{name}"),
+                path.to_str().expect("UTF-8 asset path")
+            ));
+        }
+    }
+    embedded.push_str("];\n");
+    fs::write(output.join("pet_assets.rs"), embedded).expect("Write embedded pet manifest");
     println!("cargo:rerun-if-changed=assets/icons/codexpet.ico");
     println!("cargo:rerun-if-changed=Cargo.toml");
     if env::var("CARGO_CFG_TARGET_OS").as_deref() != Ok("windows") {
         return;
     }
-    let root = PathBuf::from(env::var_os("CARGO_MANIFEST_DIR").expect("Cargo manifest directory"));
     let icon = root.join("assets/icons/codexpet.ico");
     let icon = icon.to_str().expect("UTF-8 icon path").replace('\\', "/");
     let version = env::var("CARGO_PKG_VERSION").expect("Cargo version");
